@@ -24,12 +24,12 @@ This project extracts and parses data from WW2DB website.
 
 2. Run extraction:
    ```bash
-   python scripts/run_extraction.py
+   python -B scripts/run_extraction.py
    ```
 
 3. Test parsing:
    ```bash
-   python scripts/test_parsing.py
+   python -B scripts/test_parsing.py
    ```
 
 ## Usage

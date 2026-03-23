@@ -45,8 +45,9 @@ def parse_country_details(link: str) -> Country:
     
     soup = BeautifulSoup(response.text, 'html.parser')
     
-    # Extract basic info
-    name = soup.find('h1').get_text(strip=True) if soup.find('h1') else "Unknown"
+    # Extract name from h2 tag with itemprop="name"
+    name_tag = soup.find('h2', {'itemprop': 'name'})
+    name = name_tag.get_text(strip=True) if name_tag else "Unknown"
     
     # Extract flag URL
     flag = None
@@ -61,6 +62,7 @@ def parse_country_details(link: str) -> Country:
         'millitary_deaths': None,
         'civillian_deaths': None,
         'civillian_holocaust_deaths': None,
+        'total_deaths': None,
         'population': None,
         'entry_date': None
     }
@@ -81,28 +83,28 @@ def parse_country_details(link: str) -> Country:
         elif 'military deaths' in label_norm:
             data['millitary_deaths'] = _parse_int(value)
         elif 'civilian deaths from holocaust' in label_norm or 'civ deaths from holocaust' in label_norm:
-            data['civillian_holocaust_deaths'] = value
+            data['civillian_holocaust_deaths'] = _parse_int(value)
         elif 'civilian deaths' in label_norm:
-            data['civillian_deaths'] = value
+            data['civillian_deaths'] = _parse_int(value)
+        elif 'total deaths' in label_norm:
+            data['total_deaths'] = _parse_int(value)
         elif 'population' in label_norm:
             data['population'] = _parse_int(value)
         elif 'entry into ww2' in label_norm:
             data['entry_date'] = value
 
     # Total deaths fallback
-    total_deaths = None
-    if data['millitary_deaths'] is not None and data['civillian_deaths'] is not None:
-        try:
-            civ = _parse_int(data['civillian_deaths'])
-            if civ is not None:
-                total_deaths = str(data['millitary_deaths'] + civ)
-        except Exception:
-            total_deaths = None
+    total_deaths = data['total_deaths']
+    if total_deaths is None and data['millitary_deaths'] is not None and data['civillian_deaths'] is not None:
+        total_deaths = data['millitary_deaths'] + data['civillian_deaths']
+
+    # Use name as fallback for full_name if null
+    full_name = data['full_name'] if data['full_name'] else name
 
     return Country(
         name=name,
         link=link,
-        full_name=data['full_name'],
+        full_name=full_name,
         alliance=data['alliance'],
         millitary_deaths=data['millitary_deaths'],
         civillian_deaths=data['civillian_deaths'],

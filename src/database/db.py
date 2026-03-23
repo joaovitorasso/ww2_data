@@ -1,0 +1,358 @@
+import sqlite3
+import os
+import json
+
+try:
+    from src.models.country import Country
+except ImportError:
+    import sys
+    src_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    if src_root not in sys.path:
+        sys.path.insert(0, src_root)
+    from models.country import Country
+
+
+def get_db_path():
+    """Get database path in project root/data folder."""
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    db_folder = os.path.join(project_root, 'data')
+    os.makedirs(db_folder, exist_ok=True)
+    return os.path.join(db_folder, 'ww2.db')
+
+
+def init_db():
+    """Initialize database and create tables."""
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    
+    # Drop legacy countries table to avoid stale model mismatch
+    cursor.execute('DROP TABLE IF EXISTS countries')
+
+    # Create alliances table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS alliances (
+            id_alliance INTEGER PRIMARY KEY AUTOINCREMENT,
+            alliance_name TEXT UNIQUE NOT NULL
+        )
+    ''')
+
+    # Raw layer: raw extraction JSON payload
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS raw_countries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_alliance INTEGER,
+            country_name TEXT,
+            link TEXT,
+            payload TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE SET NULL,
+            UNIQUE(id_alliance, country_name, link) ON CONFLICT IGNORE
+        )
+    ''')
+
+    # Deduplicate old raw data if any
+    cursor.execute('''
+        DELETE FROM raw_countries
+        WHERE id NOT IN (
+            SELECT MIN(id) FROM raw_countries
+            GROUP BY id_alliance, country_name, link
+        )
+    ''')
+
+    # Bronze layer: data parsed but not fully cleaned
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS bronze_countries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            raw_id INTEGER,
+            id_alliance INTEGER,
+            country_name TEXT,
+            link TEXT,
+            full_name TEXT,
+            military_deaths INTEGER,
+            civilian_deaths INTEGER,
+            civilian_holocaust_deaths INTEGER,
+            total_deaths INTEGER,
+            population INTEGER,
+            entry_date TEXT,
+            flag TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(raw_id) REFERENCES raw_countries(id) ON DELETE CASCADE,
+            FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE SET NULL
+        )
+    ''')
+
+    # Silver layer: cleaned/normalized data
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS silver_countries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            bronze_id INTEGER,
+            id_alliance INTEGER,
+            country_name TEXT,
+            link TEXT,
+            full_name TEXT,
+            military_deaths INTEGER,
+            civilian_deaths INTEGER,
+            civilian_holocaust_deaths INTEGER,
+            total_deaths INTEGER,
+            population INTEGER,
+            entry_date TEXT,
+            flag TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(bronze_id) REFERENCES bronze_countries(id) ON DELETE CASCADE,
+            FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE SET NULL
+        )
+    ''')
+
+    # Gold layer: aggregation metrics by alliance
+    cursor.execute('DROP TABLE IF EXISTS gold_section_metrics')
+    cursor.execute('''
+        CREATE TABLE gold_section_metrics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_alliance INTEGER UNIQUE,
+            country_count INTEGER,
+            total_military_deaths INTEGER,
+            total_civilian_deaths INTEGER,
+            total_holocaust_deaths INTEGER,
+            total_population INTEGER,
+            average_population REAL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE CASCADE
+        )
+    ''')
+
+    conn.commit()
+    conn.close()
+
+
+def _get_id_alliance(cursor, section):
+    cursor.execute('SELECT id_alliance FROM alliances WHERE alliance_name = ?', (section,))
+    row = cursor.fetchone()
+    if row:
+        return row[0]
+    cursor.execute('INSERT INTO alliances (alliance_name) VALUES (?)', (section,))
+    return cursor.lastrowid
+
+
+def insert_raw_country(raw_payload: dict, section: str):
+    """Insert raw extracted JSON into raw_countries."""
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    try:
+        id_alliance = _get_id_alliance(cursor, section)
+        cursor.execute('''
+            INSERT OR IGNORE INTO raw_countries (id_alliance, country_name, link, payload)
+            VALUES (?, ?, ?, ?)
+        ''', (
+            id_alliance,
+            raw_payload.get('basic', {}).get('name'),
+            raw_payload.get('basic', {}).get('link'),
+            json.dumps(raw_payload, ensure_ascii=False)
+        ))
+        if cursor.lastrowid:
+            raw_id = cursor.lastrowid
+        else:
+            cursor.execute('''
+                SELECT id FROM raw_countries
+                WHERE id_alliance = ? AND country_name = ? AND link IS ?
+                ORDER BY id LIMIT 1
+            ''', (
+                id_alliance,
+                raw_payload.get('basic', {}).get('name'),
+                raw_payload.get('basic', {}).get('link')
+            ))
+            row = cursor.fetchone()
+            raw_id = row[0] if row else None
+
+        conn.commit()
+        return raw_id
+    except Exception as e:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def insert_bronze_country(raw_id: int, parsed_data: dict, section: str):
+    """Insert parsed data into bronze layer."""
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    try:
+        id_alliance = _get_id_alliance(cursor, section)
+        cursor.execute('''
+            INSERT INTO bronze_countries (raw_id, id_alliance, country_name, link, full_name, military_deaths, civilian_deaths, civilian_holocaust_deaths, total_deaths, population, entry_date, flag)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            raw_id,
+            id_alliance,
+            parsed_data['basic']['name'],
+            parsed_data['basic']['link'],
+            parsed_data['details'].get('full_name'),
+            parsed_data['details'].get('millitary_deaths'),
+            parsed_data['details'].get('civillian_deaths'),
+            parsed_data['details'].get('civillian_holocaust_deaths'),
+            parsed_data['details'].get('total_deaths'),
+            parsed_data['details'].get('population'),
+            parsed_data['details'].get('entry_date'),
+            parsed_data['details'].get('flag')
+        ))
+        bronze_id = cursor.lastrowid
+        conn.commit()
+        return bronze_id
+    except Exception as e:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def insert_silver_country(bronze_id: int, parsed_data: dict, section: str):
+    """Insert normalized data into silver layer."""
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    try:
+        id_alliance = _get_id_alliance(cursor, section)
+
+        full_name = parsed_data['details'].get('full_name') or parsed_data['basic']['name']
+        military = parsed_data['details'].get('millitary_deaths')
+        civilian = parsed_data['details'].get('civillian_deaths')
+        total = parsed_data['details'].get('total_deaths')
+        if total is None and military is not None and civilian is not None:
+            total = (military or 0) + (civilian or 0)
+
+        cursor.execute('''
+            INSERT INTO silver_countries (bronze_id, id_alliance, country_name, link, full_name, military_deaths, civilian_deaths, civilian_holocaust_deaths, total_deaths, population, entry_date, flag)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            bronze_id,
+            id_alliance,
+            parsed_data['basic']['name'],
+            parsed_data['basic']['link'],
+            full_name,
+            military,
+            civilian,
+            parsed_data['details'].get('civillian_holocaust_deaths'),
+            total,
+            parsed_data['details'].get('population'),
+            parsed_data['details'].get('entry_date'),
+            parsed_data['details'].get('flag')
+        ))
+        silver_id = cursor.lastrowid
+        conn.commit()
+        return silver_id
+    except Exception as e:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def refresh_gold_metrics(section: str):
+    """Recalculate aggregation metrics for given section."""
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    try:
+        id_alliance = _get_id_alliance(cursor, section)
+        cursor.execute('''
+            SELECT
+                COUNT(1),
+                SUM(military_deaths),
+                SUM(civilian_deaths),
+                SUM(civilian_holocaust_deaths),
+                SUM(population)
+            FROM silver_countries
+            WHERE id_alliance = ?
+        ''', (id_alliance,))
+        row = cursor.fetchone()
+        country_count, sum_military, sum_civilian, sum_holocaust, sum_population = row
+        avg_population = None
+        if country_count and country_count > 0 and sum_population is not None:
+            avg_population = sum_population / country_count
+
+        cursor.execute('''
+            INSERT INTO gold_section_metrics (id_alliance, country_count, total_military_deaths, total_civilian_deaths, total_holocaust_deaths, total_population, average_population, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(id_alliance) DO UPDATE SET
+                country_count=excluded.country_count,
+                total_military_deaths=excluded.total_military_deaths,
+                total_civilian_deaths=excluded.total_civilian_deaths,
+                total_holocaust_deaths=excluded.total_holocaust_deaths,
+                total_population=excluded.total_population,
+                average_population=excluded.average_population,
+                updated_at=CURRENT_TIMESTAMP
+        ''', (
+            id_alliance,
+            country_count or 0,
+            sum_military or 0,
+            sum_civilian or 0,
+            sum_holocaust or 0,
+            sum_population or 0,
+            avg_population
+        ))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_all_alliances():
+    """Fetch all alliances."""
+    conn = sqlite3.connect(get_db_path())
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT * FROM alliances ORDER BY alliance_name')
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows]
+
+
+def get_silver_countries_by_alliance(alliance_name: str):
+    """Fetch silver countries in a specific alliance."""
+    conn = sqlite3.connect(get_db_path())
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT sc.*
+        FROM silver_countries sc
+        JOIN alliances a ON sc.id_alliance = a.id_alliance
+        WHERE a.alliance_name = ?
+        ORDER BY sc.country_name
+    ''', (alliance_name,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows]
+
+
+def get_gold_metrics_by_alliance(alliance_name: str):
+    """Fetch gold metrics for an alliance."""
+    conn = sqlite3.connect(get_db_path())
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT gm.*
+        FROM gold_section_metrics gm
+        JOIN alliances a ON gm.id_alliance = a.id_alliance
+        WHERE a.alliance_name = ?
+    ''', (alliance_name,))
+    row = cursor.fetchone()
+    conn.close()
+
+    return dict(row) if row else None
+
+
+def clear_db():
+    """Clear all data from database."""
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    
+    cursor.execute('DELETE FROM raw_countries')
+    cursor.execute('DELETE FROM bronze_countries')
+    cursor.execute('DELETE FROM silver_countries')
+    cursor.execute('DELETE FROM gold_section_metrics')
+    cursor.execute('DELETE FROM alliances')
+    
+    conn.commit()
+    conn.close()

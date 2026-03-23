@@ -33,21 +33,48 @@ def _parse_countries(html):
     
     data = {}
     
-    # Find all <b> tags that are followed by a table with links
+    # Find all <b> tags that are followed by a table with country entries
     bold_tags = soup.find_all('b')
     for bold in bold_tags:
         section_title = bold.get_text(strip=True)
         table = bold.find_next('table')
-        if table:
-            links = table.find_all('a', href=True)
-            if links:  # Only include if there are links
-                countries = []
-                for link in links:
-                    countries.append({
-                        'name': link.get_text(strip=True),
-                        'link': link['href']
-                    })
-                data[section_title] = countries
+        if not table:
+            continue
+
+        countries = []
+        for row in table.find_all('tr'):
+            for cell in row.find_all(['td', 'th']):
+                # anchors in this cell
+                cell_anchors = cell.find_all('a')
+                if cell_anchors:
+                    for a in cell_anchors:
+                        name = a.get_text(strip=True)
+                        if not name:
+                            continue
+                        countries.append({
+                            'name': name,
+                            'link': a.get('href') if a.has_attr('href') else None
+                        })
+                else:
+                    # plain text entries like Brazil (no link)
+                    text = cell.get_text(separator=' ', strip=True)
+                    if text:
+                        countries.append({
+                            'name': text,
+                            'link': None
+                        })
+
+        # Deduplicate by (name, link)
+        unique_countries = []
+        seen = set()
+        for item in countries:
+            key = (item['name'], item['link'])
+            if key not in seen:
+                seen.add(key)
+                unique_countries.append(item)
+
+        if unique_countries:
+            data[section_title] = unique_countries
     
     return data
 
