@@ -43,6 +43,33 @@ def main():
     print("Initializing database...")
     init_db()
 
+    output_path = os.path.join(_get_project_root(), "data", "processed", "countries_detailed.json")
+    if os.path.exists(output_path):
+        print(f"Found existing detailed file at {output_path}. Importing into SQLite...")
+        with open(output_path, "r", encoding="utf-8") as f:
+            detailed_data = json.load(f)
+
+        for section, countries in (detailed_data or {}).items():
+            print(f"Importing section: {section}")
+            for payload in countries or []:
+                try:
+                    if not isinstance(payload, dict):
+                        continue
+                    if payload.get("details") is None:
+                        continue
+
+                    raw_id = insert_raw_country(payload, section)
+                    bronze_id = insert_bronze_country(raw_id, payload, section)
+                    insert_silver_country(bronze_id, payload, section)
+                except Exception as e:
+                    name = (payload or {}).get("basic", {}).get("name") if isinstance(payload, dict) else None
+                    print(f"    Error importing {name or 'country'}: {e}")
+
+            refresh_gold_metrics(section)
+
+        print("Import complete!")
+        return
+
     # Step 1: Extract country list
     print("Extracting country list...")
     country_sections = extract_countries()
@@ -114,7 +141,6 @@ def main():
         refresh_gold_metrics(section)
 
     # Step 3: Save detailed data to JSON (optional raw output)
-    output_path = os.path.join(_get_project_root(), "data", "processed", "countries_detailed.json")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     with open(output_path, "w", encoding="utf-8") as f:
@@ -126,4 +152,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

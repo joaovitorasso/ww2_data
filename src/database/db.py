@@ -157,13 +157,10 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             bronze_id INTEGER,
             id_alliance INTEGER,
+            full_name TEXT,
             country_name TEXT,
             country_link TEXT,
-            person_name TEXT,
             person_link TEXT,
-            full_name TEXT,
-            given_name TEXT,
-            surname TEXT,
             born TEXT,
             died TEXT,
             category TEXT,
@@ -507,20 +504,17 @@ def insert_silver_person(bronze_id: int, parsed_data: dict, section: str):
 
         cursor.execute('''
             INSERT INTO silver_persons (
-                bronze_id, id_alliance, country_name, country_link, person_name, person_link,
-                full_name, given_name, surname, born, died, category, gender, img
+                bronze_id, id_alliance, full_name, country_name, country_link, person_link,
+                born, died, category, gender, img
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             bronze_id,
             id_alliance,
+            full_name,
             basic.get('country_name'),
             basic.get('country_link'),
-            basic_person_name,
             basic.get('person_link'),
-            full_name,
-            given_name,
-            surname,
             details.get('born'),
             details.get('died'),
             details.get('category'),
@@ -642,7 +636,7 @@ def get_silver_persons_by_alliance(alliance_name: str):
         FROM silver_persons sp
         JOIN alliances a ON sp.id_alliance = a.id_alliance
         WHERE a.alliance_name = ?
-        ORDER BY sp.surname, sp.given_name, sp.full_name
+        ORDER BY sp.full_name
     ''', (alliance_name,))
     rows = cursor.fetchall()
     conn.close()

@@ -48,6 +48,45 @@ def main(limit: int | None = None):
     print("Initializing database...")
     init_db()
 
+    output_path = os.path.join(_get_project_root(), "data", "processed", "persons_detailed.json")
+    if os.path.exists(output_path):
+        print(f"Found existing detailed file at {output_path}. Importing into SQLite...")
+        with open(output_path, "r", encoding="utf-8") as f:
+            detailed_data = json.load(f)
+
+        remaining = limit
+        if limit:
+            print(f"Limiting import to first {limit} people...")
+
+        for alliance, people in (detailed_data or {}).items():
+            if remaining is not None and remaining <= 0:
+                break
+
+            print(f"Importing alliance: {alliance}")
+            for payload in people or []:
+                if remaining is not None and remaining <= 0:
+                    break
+                try:
+                    if not isinstance(payload, dict):
+                        continue
+                    if payload.get("details") is None:
+                        continue
+
+                    raw_id = insert_raw_person(payload, alliance)
+                    bronze_id = insert_bronze_person(raw_id, payload, alliance)
+                    insert_silver_person(bronze_id, payload, alliance)
+                except Exception as e:
+                    name = payload.get("basic", {}).get("person_name") if isinstance(payload, dict) else None
+                    print(f"    Error importing {name or 'person'}: {e}")
+                finally:
+                    if remaining is not None:
+                        remaining -= 1
+
+            refresh_gold_person_metrics(alliance)
+
+        print("Import complete!")
+        return
+
     print("Extracting person link list...")
     person_sections = extract_persons()
 
@@ -94,7 +133,6 @@ def main(limit: int | None = None):
         detailed_data[alliance] = detailed_people
         refresh_gold_person_metrics(alliance)
 
-    output_path = os.path.join(_get_project_root(), "data", "processed", "persons_detailed.json")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(detailed_data, f, indent=2, ensure_ascii=False, default=str)

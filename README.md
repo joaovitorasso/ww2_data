@@ -23,15 +23,17 @@ This project extracts and parses data from WW2DB website.
    pip install -r requirements.txt
    ```
 
-2. Run countries pipeline (gerenates `countries.json` + `countries_detailed.json`):
+2. Run countries pipeline (generates `countries.json` + `countries_detailed.json`):
    ```bash
    python -B src/pipelines/countries.py
    ```
+   If `data/processed/countries_detailed.json` already exists, the pipeline will only import it into SQLite.
 
 3. Run persons pipeline (generates `persons.json` + `persons_detailed.json`):
    ```bash
    python -B src/pipelines/persons.py
    ```
+   If `data/processed/persons_detailed.json` already exists, the pipeline will only import it into SQLite.
 
 4. Test parsing:
    ```bash
