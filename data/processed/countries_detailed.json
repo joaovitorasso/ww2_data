@@ -1,0 +1,322 @@
+{
+  "Major Axis Nations": [
+    {
+      "basic": {
+        "name": "Germany",
+        "link": "/country/germany"
+      },
+      "details": {
+        "full_name": "Greater German Empire",
+        "alliance": "Axis - Major Member Nation",
+        "millitary_deaths": 5500000,
+        "civillian_deaths": "2,000,000",
+        "civillian_holocaust_deaths": "160,000",
+        "total_deaths": "7500000",
+        "population": 79800000,
+        "entry_date": "1 Sep 1939",
+        "flag": "https://ww2db.com/images/flags/4_250.jpg"
+      }
+    },
+    {
+      "basic": {
+        "name": "Italy",
+        "link": "/country/italy"
+      },
+      "details": {
+        "full_name": "Kingdom of Italy",
+        "alliance": "Axis - Major Member Nation",
+        "millitary_deaths": 306400,
+        "civillian_deaths": "153,100",
+        "civillian_holocaust_deaths": "8,000",
+        "total_deaths": "459500",
+        "population": 44394000,
+        "entry_date": "10 Jun 1940",
+        "flag": "https://ww2db.com/images/flags/7_250.jpg"
+      }
+    },
+    {
+      "basic": {
+        "name": "Japan",
+        "link": "/country/japan"
+      },
+      "details": {
+        "full_name": null,
+        "alliance": "Axis - Major Member Nation",
+        "millitary_deaths": 2000000,
+        "civillian_deaths": "600,000",
+        "civillian_holocaust_deaths": null,
+        "total_deaths": "2600000",
+        "population": 71380000,
+        "entry_date": "7 Jul 1937",
+        "flag": "https://ww2db.com/images/flags/1_250.jpg"
+      }
+    }
+  ],
+  "Minor Axis Nations and Possessions": [
+    {
+      "basic": {
+        "name": "Albania",
+        "link": "/country/albania"
+      },
+      "details": {
+        "full_name": "Albanian Kingdom",
+        "alliance": "Axis - Minor Member Nation or Possession",
+        "millitary_deaths": null,
+        "civillian_deaths": "30,200",
+        "civillian_holocaust_deaths": "200",
+        "total_deaths": null,
+        "population": 1070000,
+        "entry_date": "10 Jun 1940",
+        "flag": "https://ww2db.com/images/flags/44_250.jpg"
+      }
+    },
+    {
+      "basic": {
+        "name": "Hungary",
+        "link": "/country/hungary"
+      },
+      "details": {
+        "full_name": "Kingdom of Hungary",
+        "alliance": "Axis - Minor Member Nation or Possession",
+        "millitary_deaths": 300000,
+        "civillian_deaths": "680,000",
+        "civillian_holocaust_deaths": "400,000",
+        "total_deaths": "980000",
+        "population": 9129000,
+        "entry_date": "27 Jun 1941",
+        "flag": "https://ww2db.com/images/flags/21_250.jpg"
+      }
+    },
+    {
+      "basic": {
+        "name": "Marshall Islands",
+        "link": "/country/marshall_islands"
+      },
+      "details": {
+        "full_name": null,
+        "alliance": "Axis - Minor Member Nation or Possession",
+        "millitary_deaths": null,
+        "civillian_deaths": null,
+        "civillian_holocaust_deaths": null,
+        "total_deaths": null,
+        "population": 10000,
+        "entry_date": "7 Dec 1941",
+        "flag": null
+      }
+    }
+  ],
+  "Major Allied Nations": [
+    {
+      "basic": {
+        "name": "United Kingdom",
+        "link": "/country/united_kingdom"
+      },
+      "details": {
+        "full_name": "United Kingdom of Great Britain and Northern Ireland",
+        "alliance": "Allies - Major Member Nation",
+        "millitary_deaths": 382600,
+        "civillian_deaths": "67,800",
+        "civillian_holocaust_deaths": null,
+        "total_deaths": "450400",
+        "population": 47760000,
+        "entry_date": "3 Sep 1939",
+        "flag": "https://ww2db.com/images/flags/3_250.jpg"
+      }
+    },
+    {
+      "basic": {
+        "name": "United States",
+        "link": "/country/united_states"
+      },
+      "details": {
+        "full_name": "United States of America",
+        "alliance": "Allies - Major Member Nation",
+        "millitary_deaths": 407318,
+        "civillian_deaths": "11,200",
+        "civillian_holocaust_deaths": null,
+        "total_deaths": "418518",
+        "population": 131028000,
+        "entry_date": "7 Dec 1941",
+        "flag": "https://ww2db.com/images/flags/2_250.jpg"
+      }
+    }
+  ],
+  "Minor Allied Nations and Possessions": [
+    {
+      "basic": {
+        "name": "Aden",
+        "link": "/country/aden"
+      },
+      "details": {
+        "full_name": "Crown Colony of Aden and Aden Protectorate",
+        "alliance": "Allies - Minor Member Nation or Possession",
+        "millitary_deaths": null,
+        "civillian_deaths": null,
+        "civillian_holocaust_deaths": null,
+        "total_deaths": null,
+        "population": 3000000,
+        "entry_date": null,
+        "flag": "https://ww2db.com/images/flags/91_250.jpg"
+      }
+    },
+    {
+      "basic": {
+        "name": "Colombia",
+        "link": "/country/colombia"
+      },
+      "details": {
+        "full_name": "Republic of Colombia",
+        "alliance": "Allies - Minor Member Nation or Possession",
+        "millitary_deaths": null,
+        "civillian_deaths": null,
+        "civillian_holocaust_deaths": null,
+        "total_deaths": null,
+        "population": 8896000,
+        "entry_date": "26 Nov 1943",
+        "flag": null
+      }
+    },
+    {
+      "basic": {
+        "name": "Alaska",
+        "link": "/country/alaska"
+      },
+      "details": {
+        "full_name": "Territory of Alaska",
+        "alliance": "Allies - Minor Member Nation or Possession",
+        "millitary_deaths": null,
+        "civillian_deaths": null,
+        "civillian_holocaust_deaths": null,
+        "total_deaths": null,
+        "population": 70000,
+        "entry_date": "7 Dec 1941",
+        "flag": "https://ww2db.com/images/flags/69_250.jpg"
+      }
+    }
+  ],
+  "Major Soviet Nation": [
+    {
+      "basic": {
+        "name": "Russia",
+        "link": "/country/russia"
+      },
+      "details": {
+        "full_name": "Russian Soviet Federative Socialist Republic",
+        "alliance": "Soviet Union - Major Member Nation",
+        "millitary_deaths": 10700000,
+        "civillian_deaths": "12,500,000",
+        "civillian_holocaust_deaths": "1,000,000",
+        "total_deaths": "23200000",
+        "population": 109300000,
+        "entry_date": "17 Sep 1939",
+        "flag": "https://ww2db.com/images/flags/5_250.jpg"
+      }
+    }
+  ],
+  "Minor Soviet Nations and Possessions": [
+    {
+      "basic": {
+        "name": "Armenia",
+        "link": "/country/armenia"
+      },
+      "details": {
+        "full_name": "Armenian Soviet Socialist Republic",
+        "alliance": "Soviet Union - Minor Member Nation or Possession",
+        "millitary_deaths": 150000,
+        "civillian_deaths": "30,000",
+        "civillian_holocaust_deaths": null,
+        "total_deaths": "180000",
+        "population": 1320000,
+        "entry_date": "22 Jun 1941",
+        "flag": "https://ww2db.com/images/flags/88_250.jpg"
+      }
+    },
+    {
+      "basic": {
+        "name": "Kazakhstan",
+        "link": "/country/kazakhstan"
+      },
+      "details": {
+        "full_name": "Kazakh Soviet Socialist Republic",
+        "alliance": "Soviet Union - Minor Member Nation or Possession",
+        "millitary_deaths": 310000,
+        "civillian_deaths": "350,000",
+        "civillian_holocaust_deaths": null,
+        "total_deaths": "660000",
+        "population": 6150000,
+        "entry_date": "22 Jun 1941",
+        "flag": "https://ww2db.com/images/flags/36_250.jpg"
+      }
+    },
+    {
+      "basic": {
+        "name": "Turkmenia",
+        "link": "/country/turkmenia"
+      },
+      "details": {
+        "full_name": "Turkmen Soviet Socialist Republic",
+        "alliance": "Soviet Union - Minor Member Nation or Possession",
+        "millitary_deaths": 70000,
+        "civillian_deaths": "30,000",
+        "civillian_holocaust_deaths": null,
+        "total_deaths": "100000",
+        "population": 1300000,
+        "entry_date": "22 Jun 1941",
+        "flag": "https://ww2db.com/images/flags/103_250.jpg"
+      }
+    }
+  ],
+  "Neutral and Non-Belligerent Nations": [
+    {
+      "basic": {
+        "name": "Afghanistan",
+        "link": "/country/afghanistan"
+      },
+      "details": {
+        "full_name": "Kingdom of Afghanistan",
+        "alliance": "Neutral or Non-Belligerent",
+        "millitary_deaths": null,
+        "civillian_deaths": null,
+        "civillian_holocaust_deaths": null,
+        "total_deaths": null,
+        "population": 7000000,
+        "entry_date": null,
+        "flag": "https://ww2db.com/images/flags/131_250.jpg"
+      }
+    },
+    {
+      "basic": {
+        "name": "Iceland",
+        "link": "/country/iceland"
+      },
+      "details": {
+        "full_name": "Kingdom of Iceland",
+        "alliance": "Neutral or Non-Belligerent",
+        "millitary_deaths": null,
+        "civillian_deaths": null,
+        "civillian_holocaust_deaths": null,
+        "total_deaths": null,
+        "population": 120000,
+        "entry_date": "10 May 1940",
+        "flag": "https://ww2db.com/images/flags/90_250.jpg"
+      }
+    },
+    {
+      "basic": {
+        "name": "Portuguese Timor",
+        "link": "/country/portuguese_timor"
+      },
+      "details": {
+        "full_name": null,
+        "alliance": "Neutral or Non-Belligerent",
+        "millitary_deaths": null,
+        "civillian_deaths": "50,000",
+        "civillian_holocaust_deaths": null,
+        "total_deaths": null,
+        "population": 500000,
+        "entry_date": "18 Dec 1941",
+        "flag": "https://ww2db.com/images/flags/118_250.jpg"
+      }
+    }
+  ]
+}

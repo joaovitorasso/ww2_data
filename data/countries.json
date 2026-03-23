@@ -1,0 +1,468 @@
+{
+  "Major Axis Nations": [
+    {
+      "name": "Germany",
+      "link": "/country/germany"
+    },
+    {
+      "name": "Italy",
+      "link": "/country/italy"
+    },
+    {
+      "name": "Japan",
+      "link": "/country/japan"
+    }
+  ],
+  "Minor Axis Nations and Possessions": [
+    {
+      "name": "Albania",
+      "link": "/country/albania"
+    },
+    {
+      "name": "Hungary",
+      "link": "/country/hungary"
+    },
+    {
+      "name": "Marshall Islands",
+      "link": "/country/marshall_islands"
+    },
+    {
+      "name": "Austria",
+      "link": "/country/austria"
+    },
+    {
+      "name": "Italian Eritrea",
+      "link": "/country/italian_eritrea"
+    },
+    {
+      "name": "Romania",
+      "link": "/country/romania"
+    },
+    {
+      "name": "Bulgaria",
+      "link": "/country/bulgaria"
+    },
+    {
+      "name": "Italian Somaliland",
+      "link": "/country/italian_somaliland"
+    },
+    {
+      "name": "Taiwan",
+      "link": "/country/taiwan"
+    },
+    {
+      "name": "Caroline Islands",
+      "link": "/country/caroline_islands"
+    },
+    {
+      "name": "Korea",
+      "link": "/country/korea"
+    },
+    {
+      "name": "Thailand",
+      "link": "/country/thailand"
+    },
+    {
+      "name": "Czechoslovakia",
+      "link": "/country/czechoslovakia"
+    },
+    {
+      "name": "Libya",
+      "link": "/country/libya"
+    },
+    {
+      "name": "Yugoslavia",
+      "link": "/country/yugoslavia"
+    },
+    {
+      "name": "Finland",
+      "link": "/country/finland"
+    },
+    {
+      "name": "Mariana Islands",
+      "link": "/country/mariana_islands"
+    }
+  ],
+  "Major Allied Nations": [
+    {
+      "name": "United Kingdom",
+      "link": "/country/united_kingdom"
+    },
+    {
+      "name": "United States",
+      "link": "/country/united_states"
+    }
+  ],
+  "Minor Allied Nations and Possessions": [
+    {
+      "name": "Aden",
+      "link": "/country/aden"
+    },
+    {
+      "name": "Colombia",
+      "link": "/country/colombia"
+    },
+    {
+      "name": "Alaska",
+      "link": "/country/alaska"
+    },
+    {
+      "name": "Malaya",
+      "link": "/country/malaya"
+    },
+    {
+      "name": "Malta",
+      "link": "/country/malta"
+    },
+    {
+      "name": "Mexico",
+      "link": "/country/mexico"
+    },
+    {
+      "name": "Australia",
+      "link": "/country/australia"
+    },
+    {
+      "name": "Dutch East Indies",
+      "link": "/country/dutch_east_indies"
+    },
+    {
+      "name": "Australian New Guinea",
+      "link": "/country/australian_new_guinea"
+    },
+    {
+      "name": "Nauru",
+      "link": "/country/nauru"
+    },
+    {
+      "name": "Australian Papua",
+      "link": "/country/australian_papua"
+    },
+    {
+      "name": "Netherlands",
+      "link": "/country/netherlands"
+    },
+    {
+      "name": "Ethiopia",
+      "link": "/country/ethiopia"
+    },
+    {
+      "name": "New Hebrides",
+      "link": "/country/new_hebrides"
+    },
+    {
+      "name": "Fiji",
+      "link": "/country/fiji"
+    },
+    {
+      "name": "New Zealand",
+      "link": "/country/new_zealand"
+    },
+    {
+      "name": "Belgium",
+      "link": "/country/belgium"
+    },
+    {
+      "name": "France",
+      "link": "/country/france"
+    },
+    {
+      "name": "Newfoundland",
+      "link": "/country/newfoundland"
+    },
+    {
+      "name": "French Equatorial Africa",
+      "link": "/country/french_equatorial_africa"
+    },
+    {
+      "name": "Gibraltar",
+      "link": "/country/gibraltar"
+    },
+    {
+      "name": "North Borneo",
+      "link": "/country/north_borneo"
+    },
+    {
+      "name": "British Cameroons",
+      "link": "/country/british_cameroons"
+    },
+    {
+      "name": "Gilbert and Ellice Islands",
+      "link": "/country/gilbert_and_ellice_islands"
+    },
+    {
+      "name": "Greece",
+      "link": "/country/greece"
+    },
+    {
+      "name": "Panama Canal Zone",
+      "link": "/country/panama_canal_zone"
+    },
+    {
+      "name": "Guam",
+      "link": "/country/guam"
+    },
+    {
+      "name": "Philippines",
+      "link": "/country/philippines"
+    },
+    {
+      "name": "Poland",
+      "link": "/country/poland"
+    },
+    {
+      "name": "Guernsey",
+      "link": "/country/guernsey"
+    },
+    {
+      "name": "Puerto Rico",
+      "link": "/country/puerto_rico"
+    },
+    {
+      "name": "British Western Pacific Territories",
+      "link": "/country/british_western_pacific_territories"
+    },
+    {
+      "name": "Sarawak",
+      "link": "/country/sarawak"
+    },
+    {
+      "name": "Hawaii",
+      "link": "/country/hawaii"
+    },
+    {
+      "name": "Brunei",
+      "link": "/country/brunei"
+    },
+    {
+      "name": "Hong Kong",
+      "link": "/country/hong_kong"
+    },
+    {
+      "name": "Singapore",
+      "link": "/country/singapore"
+    },
+    {
+      "name": "Burma",
+      "link": "/country/burma"
+    },
+    {
+      "name": "India",
+      "link": "/country/india"
+    },
+    {
+      "name": "South Africa",
+      "link": "/country/south_africa"
+    },
+    {
+      "name": "Canada",
+      "link": "/country/canada"
+    },
+    {
+      "name": "Tanganyika",
+      "link": "/country/tanganyika"
+    },
+    {
+      "name": "Ceylon",
+      "link": "/country/ceylon"
+    },
+    {
+      "name": "Trinidad",
+      "link": "/country/trinidad"
+    },
+    {
+      "name": "China",
+      "link": "/country/china"
+    },
+    {
+      "name": "Jersey",
+      "link": "/country/jersey"
+    },
+    {
+      "name": "US Pacific Islands",
+      "link": "/country/us_pacific_islands"
+    },
+    {
+      "name": "Christmas Island",
+      "link": "/country/christmas_island"
+    },
+    {
+      "name": "US Virgin Islands",
+      "link": "/country/us_virgin_islands"
+    }
+  ],
+  "Major Soviet Nation": [
+    {
+      "name": "Russia",
+      "link": "/country/russia"
+    }
+  ],
+  "Minor Soviet Nations and Possessions": [
+    {
+      "name": "Armenia",
+      "link": "/country/armenia"
+    },
+    {
+      "name": "Kazakhstan",
+      "link": "/country/kazakhstan"
+    },
+    {
+      "name": "Turkmenia",
+      "link": "/country/turkmenia"
+    },
+    {
+      "name": "Azerbaijan",
+      "link": "/country/azerbaijan"
+    },
+    {
+      "name": "Kirghizia",
+      "link": "/country/kirghizia"
+    },
+    {
+      "name": "Ukraine",
+      "link": "/country/ukraine"
+    },
+    {
+      "name": "Byelorussia",
+      "link": "/country/byelorussia"
+    },
+    {
+      "name": "Moldova",
+      "link": "/country/moldova"
+    },
+    {
+      "name": "Uzbekistan",
+      "link": "/country/uzbekistan"
+    },
+    {
+      "name": "Georgia",
+      "link": "/country/georgia"
+    },
+    {
+      "name": "Tajikistan",
+      "link": "/country/tajikistan"
+    }
+  ],
+  "Neutral and Non-Belligerent Nations": [
+    {
+      "name": "Afghanistan",
+      "link": "/country/afghanistan"
+    },
+    {
+      "name": "Iceland",
+      "link": "/country/iceland"
+    },
+    {
+      "name": "Portuguese Timor",
+      "link": "/country/portuguese_timor"
+    },
+    {
+      "name": "Danzig",
+      "link": "/country/danzig"
+    },
+    {
+      "name": "Ireland",
+      "link": "/country/ireland"
+    },
+    {
+      "name": "San Marino",
+      "link": "/country/san_marino"
+    },
+    {
+      "name": "Estonia",
+      "link": "/country/estonia"
+    },
+    {
+      "name": "Latvia",
+      "link": "/country/latvia"
+    },
+    {
+      "name": "Saudi Arabia",
+      "link": "/country/saudi_arabia"
+    },
+    {
+      "name": "Liechtenstein",
+      "link": "/country/liechtenstein"
+    },
+    {
+      "name": "Spain",
+      "link": "/country/spain"
+    },
+    {
+      "name": "French Cameroun",
+      "link": "/country/french_cameroun"
+    },
+    {
+      "name": "Lithuania",
+      "link": "/country/lithuania"
+    },
+    {
+      "name": "French Indochina",
+      "link": "/country/french_indochina"
+    },
+    {
+      "name": "Madagascar",
+      "link": "/country/madagascar"
+    },
+    {
+      "name": "Sweden",
+      "link": "/country/sweden"
+    },
+    {
+      "name": "French Morocco",
+      "link": "/country/french_morocco"
+    },
+    {
+      "name": "Monaco",
+      "link": "/country/monaco"
+    },
+    {
+      "name": "Switzerland",
+      "link": "/country/switzerland"
+    },
+    {
+      "name": "Portugal",
+      "link": "/country/portugal"
+    },
+    {
+      "name": "Tunisia",
+      "link": "/country/tunisia"
+    },
+    {
+      "name": "French Somaliland",
+      "link": "/country/french_somaliland"
+    },
+    {
+      "name": "Portuguese India",
+      "link": "/country/portuguese_india"
+    },
+    {
+      "name": "Turkey",
+      "link": "/country/turkey"
+    },
+    {
+      "name": "French Syria and Lebanon",
+      "link": "/country/french_syria_and_lebanon"
+    },
+    {
+      "name": "Portuguese Macau",
+      "link": "/country/portuguese_macau"
+    },
+    {
+      "name": "Uruguay",
+      "link": "/country/uruguay"
+    },
+    {
+      "name": "French West Africa",
+      "link": "/country/french_west_africa"
+    },
+    {
+      "name": "Portuguese Mozambique",
+      "link": "/country/portuguese_mozambique"
+    },
+    {
+      "name": "Vatican City",
+      "link": "/country/vatican_city"
+    }
+  ]
+}
