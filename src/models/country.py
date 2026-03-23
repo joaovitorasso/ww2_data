@@ -13,6 +13,5 @@ class Country:
     total_deaths: Optional[int] = None
     population: Optional[int] = None
     entry_date: Optional[str] = None
-    flag: Optional[str] = None  # URL to flag image, if available
-
-    # Add more fields as needed based on the page structure
+    flag: Optional[str] = None
+    people: Optional[list] = None

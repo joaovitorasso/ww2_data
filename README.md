@@ -12,8 +12,9 @@ This project extracts and parses data from WW2DB website.
   - `extract/`: Initial data extraction
   - `parse/`: Detailed parsing
   - `models/`: Data models
+  - `pipelines/`: Pipeline orchestrators
   - `utils/`: Utility functions
-- `scripts/`: Execution scripts
+- `tests/`: Test scripts
 
 ## Setup
 
@@ -22,18 +23,25 @@ This project extracts and parses data from WW2DB website.
    pip install -r requirements.txt
    ```
 
-2. Run extraction:
+2. Run countries pipeline (gerenates `countries.json` + `countries_detailed.json`):
    ```bash
-   python -B scripts/run_extraction.py
+   python -B src/pipelines/countries.py
    ```
 
-3. Test parsing:
+3. Run persons pipeline (generates `persons.json` + `persons_detailed.json`):
    ```bash
-   python -B scripts/test_parsing.py
+   python -B src/pipelines/persons.py
+   ```
+
+4. Test parsing:
+   ```bash
+   python -B tests/test_parsing.py
+   python -B tests/test_person_details_html.py
    ```
 
 ## Usage
 
-- `src/main.py`: Main orchestrator
+- `src/pipelines/countries.py`: Countries pipeline orchestrator
+- `src/pipelines/persons.py`: Persons pipeline orchestrator
 - `src/extract/countries.py`: Extract country list
 - `src/parse/country_details.py`: Parse individual country details

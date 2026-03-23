@@ -90,7 +90,7 @@ def extract_countries():
     
     # Parse and save to JSON
     data = _parse_countries(html)
-    output_path = os.path.join(os.path.dirname(CONFIG_PATH), '..', 'data', 'countries.json')
+    output_path = os.path.join(os.path.dirname(CONFIG_PATH), '..', 'data', 'raw', 'countries.json')
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
@@ -101,5 +101,5 @@ def extract_countries():
 
 if __name__ == "__main__":
     countries_data = extract_countries()
-    print("Data saved to data/countries.json")
+    print("Data saved to data/raw/countries.json")
     print(json.dumps(countries_data, indent=2, ensure_ascii=False))

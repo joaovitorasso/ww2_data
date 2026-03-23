@@ -7,10 +7,11 @@ import sys
 import os
 
 # Add src to path
-src_path = os.path.join(os.path.dirname(__file__), '..', 'src')
+src_path = os.path.join(os.path.dirname(__file__), "..", "src")
 sys.path.insert(0, src_path)
 
 from parse.country_details import parse_country_details
+from parse.person_details import parse_person_details
 
 def test_parsing():
     """Test parsing a single country."""
@@ -33,5 +34,25 @@ def test_parsing():
     except Exception as e:
         print(f"Test failed: {e}")
 
+
+def test_person_parsing():
+    """Test parsing a single person."""
+    test_link = "/person_bio.php?person_id=490"  # Example link (Otto Abetz)
+
+    try:
+        person = parse_person_details(test_link)
+        print("Person test successful!")
+        print(f"Given Name: {person.name}")
+        print(f"Surname: {person.surname}")
+        print(f"Country: {person.country}")
+        print(f"Born: {person.born}")
+        print(f"Died: {person.died}")
+        print(f"Category: {person.category}")
+        print(f"Gender: {person.gender}")
+        print(f"Image: {person.img}")
+    except Exception as e:
+        print(f"Person test failed: {e}")
+
 if __name__ == "__main__":
     test_parsing()
+    test_person_parsing()
