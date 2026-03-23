@@ -1,0 +1,12 @@
+# Ignore data outputs
+/data
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+
+# Env
+.env
+.vscode/
+.idea/
