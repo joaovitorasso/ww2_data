@@ -10,3 +10,9 @@ __pycache__/
 .env
 .vscode/
 .idea/
+
+# Optional models not tracked
+src/models/aircraft.py
+src/models/event.py
+src/models/ship.py
+src/models/vehicle.py
