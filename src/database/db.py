@@ -80,6 +80,20 @@ def init_db():
             FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE SET NULL
         )
     ''')
+    cursor.execute('''
+        DELETE FROM bronze_countries
+        WHERE raw_id IS NOT NULL
+          AND id NOT IN (
+              SELECT MIN(id) FROM bronze_countries
+              WHERE raw_id IS NOT NULL
+              GROUP BY raw_id
+          )
+    ''')
+    cursor.execute('''
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_bronze_countries_raw_id
+        ON bronze_countries(raw_id)
+        WHERE raw_id IS NOT NULL
+    ''')
 
     # Silver layer: cleaned/normalized data
     cursor.execute('''
@@ -101,6 +115,31 @@ def init_db():
             FOREIGN KEY(bronze_id) REFERENCES bronze_countries(id) ON DELETE CASCADE,
             FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE SET NULL
         )
+    ''')
+    cursor.execute('''
+        DELETE FROM silver_countries
+        WHERE bronze_id IS NOT NULL
+          AND id NOT IN (
+              SELECT MIN(id) FROM silver_countries
+              WHERE bronze_id IS NOT NULL
+              GROUP BY bronze_id
+          )
+    ''')
+    cursor.execute('''
+        DELETE FROM silver_countries
+        WHERE id NOT IN (
+            SELECT MIN(id) FROM silver_countries
+            GROUP BY id_alliance, country_name, link
+        )
+    ''')
+    cursor.execute('''
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_silver_countries_bronze_id
+        ON silver_countries(bronze_id)
+        WHERE bronze_id IS NOT NULL
+    ''')
+    cursor.execute('''
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_silver_countries_logical_key
+        ON silver_countries(id_alliance, country_name, link)
     ''')
 
     # Raw layer: raw extraction JSON payload (persons)
@@ -150,6 +189,20 @@ def init_db():
             FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE SET NULL
         )
     ''')
+    cursor.execute('''
+        DELETE FROM bronze_persons
+        WHERE raw_id IS NOT NULL
+          AND id NOT IN (
+              SELECT MIN(id) FROM bronze_persons
+              WHERE raw_id IS NOT NULL
+              GROUP BY raw_id
+          )
+    ''')
+    cursor.execute('''
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_bronze_persons_raw_id
+        ON bronze_persons(raw_id)
+        WHERE raw_id IS NOT NULL
+    ''')
 
     # Silver layer: cleaned/normalized data (persons)
     cursor.execute('''
@@ -170,6 +223,31 @@ def init_db():
             FOREIGN KEY(bronze_id) REFERENCES bronze_persons(id) ON DELETE CASCADE,
             FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE SET NULL
         )
+    ''')
+    cursor.execute('''
+        DELETE FROM silver_persons
+        WHERE bronze_id IS NOT NULL
+          AND id NOT IN (
+              SELECT MIN(id) FROM silver_persons
+              WHERE bronze_id IS NOT NULL
+              GROUP BY bronze_id
+          )
+    ''')
+    cursor.execute('''
+        DELETE FROM silver_persons
+        WHERE id NOT IN (
+            SELECT MIN(id) FROM silver_persons
+            GROUP BY id_alliance, country_name, person_link
+        )
+    ''')
+    cursor.execute('''
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_silver_persons_bronze_id
+        ON silver_persons(bronze_id)
+        WHERE bronze_id IS NOT NULL
+    ''')
+    cursor.execute('''
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_silver_persons_logical_key
+        ON silver_persons(id_alliance, country_name, person_link)
     ''')
 
     # Gold layer: aggregation metrics by alliance
@@ -197,6 +275,134 @@ def init_db():
             male_count INTEGER,
             female_count INTEGER,
             unknown_gender_count INTEGER,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE CASCADE
+        )
+    ''')
+
+    # Raw layer: raw extraction JSON payload (weapons)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS raw_weapons (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_alliance INTEGER,
+            country_name TEXT,
+            country_link TEXT,
+            weapon_name TEXT,
+            weapon_link TEXT,
+            payload TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE SET NULL,
+            UNIQUE(id_alliance, country_name, weapon_link) ON CONFLICT IGNORE
+        )
+    ''')
+
+    # Deduplicate old raw weapon data if any
+    cursor.execute('''
+        DELETE FROM raw_weapons
+        WHERE id NOT IN (
+            SELECT MIN(id) FROM raw_weapons
+            GROUP BY id_alliance, country_name, weapon_link
+        )
+    ''')
+
+    # Bronze layer: data parsed but not fully cleaned (weapons)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS bronze_weapons (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            raw_id INTEGER,
+            id_alliance INTEGER,
+            country_name TEXT,
+            country_link TEXT,
+            weapon_name TEXT,
+            weapon_link TEXT,
+            origin_country TEXT,
+            weapon_type TEXT,
+            caliber TEXT,
+            capacity TEXT,
+            length TEXT,
+            barrel_length TEXT,
+            weight TEXT,
+            range_value TEXT,
+            muzzle_velocity TEXT,
+            img TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(raw_id) REFERENCES raw_weapons(id) ON DELETE CASCADE,
+            FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE SET NULL
+        )
+    ''')
+    cursor.execute('''
+        DELETE FROM bronze_weapons
+        WHERE raw_id IS NOT NULL
+          AND id NOT IN (
+              SELECT MIN(id) FROM bronze_weapons
+              WHERE raw_id IS NOT NULL
+              GROUP BY raw_id
+          )
+    ''')
+    cursor.execute('''
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_bronze_weapons_raw_id
+        ON bronze_weapons(raw_id)
+        WHERE raw_id IS NOT NULL
+    ''')
+
+    # Silver layer: cleaned/normalized data (weapons)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS silver_weapons (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            bronze_id INTEGER,
+            id_alliance INTEGER,
+            full_name TEXT,
+            country_name TEXT,
+            country_link TEXT,
+            weapon_link TEXT,
+            origin_country TEXT,
+            weapon_type TEXT,
+            caliber TEXT,
+            capacity TEXT,
+            length TEXT,
+            barrel_length TEXT,
+            weight TEXT,
+            range_value TEXT,
+            muzzle_velocity TEXT,
+            img TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(bronze_id) REFERENCES bronze_weapons(id) ON DELETE CASCADE,
+            FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE SET NULL
+        )
+    ''')
+    cursor.execute('''
+        DELETE FROM silver_weapons
+        WHERE bronze_id IS NOT NULL
+          AND id NOT IN (
+              SELECT MIN(id) FROM silver_weapons
+              WHERE bronze_id IS NOT NULL
+              GROUP BY bronze_id
+          )
+    ''')
+    cursor.execute('''
+        DELETE FROM silver_weapons
+        WHERE id NOT IN (
+            SELECT MIN(id) FROM silver_weapons
+            GROUP BY id_alliance, country_name, weapon_link
+        )
+    ''')
+    cursor.execute('''
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_silver_weapons_bronze_id
+        ON silver_weapons(bronze_id)
+        WHERE bronze_id IS NOT NULL
+    ''')
+    cursor.execute('''
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_silver_weapons_logical_key
+        ON silver_weapons(id_alliance, country_name, weapon_link)
+    ''')
+
+    # Gold layer: weapon aggregation metrics by alliance
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS gold_weapon_metrics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_alliance INTEGER UNIQUE,
+            weapon_count INTEGER,
+            unknown_type_count INTEGER,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE CASCADE
         )
@@ -261,7 +467,7 @@ def insert_bronze_country(raw_id: int, parsed_data: dict, section: str):
     try:
         id_alliance = _get_id_alliance(cursor, section)
         cursor.execute('''
-            INSERT INTO bronze_countries (raw_id, id_alliance, country_name, link, full_name, military_deaths, civilian_deaths, civilian_holocaust_deaths, total_deaths, population, entry_date, flag)
+            INSERT OR IGNORE INTO bronze_countries (raw_id, id_alliance, country_name, link, full_name, military_deaths, civilian_deaths, civilian_holocaust_deaths, total_deaths, population, entry_date, flag)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             raw_id,
@@ -277,7 +483,18 @@ def insert_bronze_country(raw_id: int, parsed_data: dict, section: str):
             parsed_data['details'].get('entry_date'),
             parsed_data['details'].get('flag')
         ))
-        bronze_id = cursor.lastrowid
+
+        if cursor.lastrowid:
+            bronze_id = cursor.lastrowid
+        else:
+            cursor.execute('''
+                SELECT id FROM bronze_countries
+                WHERE raw_id = ?
+                ORDER BY id LIMIT 1
+            ''', (raw_id,))
+            row = cursor.fetchone()
+            bronze_id = row[0] if row else None
+
         conn.commit()
         return bronze_id
     except Exception as e:
@@ -302,7 +519,7 @@ def insert_silver_country(bronze_id: int, parsed_data: dict, section: str):
             total = (military or 0) + (civilian or 0)
 
         cursor.execute('''
-            INSERT INTO silver_countries (bronze_id, id_alliance, country_name, link, full_name, military_deaths, civilian_deaths, civilian_holocaust_deaths, total_deaths, population, entry_date, flag)
+            INSERT OR IGNORE INTO silver_countries (bronze_id, id_alliance, country_name, link, full_name, military_deaths, civilian_deaths, civilian_holocaust_deaths, total_deaths, population, entry_date, flag)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             bronze_id,
@@ -318,7 +535,18 @@ def insert_silver_country(bronze_id: int, parsed_data: dict, section: str):
             parsed_data['details'].get('entry_date'),
             parsed_data['details'].get('flag')
         ))
-        silver_id = cursor.lastrowid
+
+        if cursor.lastrowid:
+            silver_id = cursor.lastrowid
+        else:
+            cursor.execute('''
+                SELECT id FROM silver_countries
+                WHERE bronze_id = ?
+                ORDER BY id LIMIT 1
+            ''', (bronze_id,))
+            row = cursor.fetchone()
+            silver_id = row[0] if row else None
+
         conn.commit()
         return silver_id
     except Exception as e:
@@ -427,7 +655,7 @@ def insert_bronze_person(raw_id: int, parsed_data: dict, section: str):
         basic = parsed_data.get('basic') or {}
 
         cursor.execute('''
-            INSERT INTO bronze_persons (
+            INSERT OR IGNORE INTO bronze_persons (
                 raw_id, id_alliance, country_name, country_link, person_name, person_link,
                 given_name, surname, born, died, category, gender, img
             )
@@ -448,7 +676,17 @@ def insert_bronze_person(raw_id: int, parsed_data: dict, section: str):
             details.get('img')
         ))
 
-        bronze_id = cursor.lastrowid
+        if cursor.lastrowid:
+            bronze_id = cursor.lastrowid
+        else:
+            cursor.execute('''
+                SELECT id FROM bronze_persons
+                WHERE raw_id = ?
+                ORDER BY id LIMIT 1
+            ''', (raw_id,))
+            row = cursor.fetchone()
+            bronze_id = row[0] if row else None
+
         conn.commit()
         return bronze_id
     except Exception:
@@ -503,7 +741,7 @@ def insert_silver_person(bronze_id: int, parsed_data: dict, section: str):
                     gender = 'Female'
 
         cursor.execute('''
-            INSERT INTO silver_persons (
+            INSERT OR IGNORE INTO silver_persons (
                 bronze_id, id_alliance, full_name, country_name, country_link, person_link,
                 born, died, category, gender, img
             )
@@ -522,7 +760,17 @@ def insert_silver_person(bronze_id: int, parsed_data: dict, section: str):
             details.get('img')
         ))
 
-        silver_id = cursor.lastrowid
+        if cursor.lastrowid:
+            silver_id = cursor.lastrowid
+        else:
+            cursor.execute('''
+                SELECT id FROM silver_persons
+                WHERE bronze_id = ?
+                ORDER BY id LIMIT 1
+            ''', (bronze_id,))
+            row = cursor.fetchone()
+            silver_id = row[0] if row else None
+
         conn.commit()
         return silver_id
     except Exception:
@@ -569,6 +817,208 @@ def refresh_gold_person_metrics(section: str):
             male_count or 0,
             female_count or 0,
             unknown_count or 0
+        ))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def insert_raw_weapon(raw_payload: dict, section: str):
+    """Insert raw extracted JSON into raw_weapons."""
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    try:
+        id_alliance = _get_id_alliance(cursor, section)
+        cursor.execute('''
+            INSERT OR IGNORE INTO raw_weapons (id_alliance, country_name, country_link, weapon_name, weapon_link, payload)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            id_alliance,
+            raw_payload.get('basic', {}).get('country_name'),
+            raw_payload.get('basic', {}).get('country_link'),
+            raw_payload.get('basic', {}).get('weapon_name'),
+            raw_payload.get('basic', {}).get('weapon_link'),
+            json.dumps(raw_payload, ensure_ascii=False)
+        ))
+
+        if cursor.lastrowid:
+            raw_id = cursor.lastrowid
+        else:
+            cursor.execute('''
+                SELECT id FROM raw_weapons
+                WHERE id_alliance = ? AND country_name IS ? AND weapon_link = ?
+                ORDER BY id LIMIT 1
+            ''', (
+                id_alliance,
+                raw_payload.get('basic', {}).get('country_name'),
+                raw_payload.get('basic', {}).get('weapon_link')
+            ))
+            row = cursor.fetchone()
+            raw_id = row[0] if row else None
+
+        conn.commit()
+        return raw_id
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def insert_bronze_weapon(raw_id: int, parsed_data: dict, section: str):
+    """Insert parsed data into bronze_weapons."""
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    try:
+        id_alliance = _get_id_alliance(cursor, section)
+        details = parsed_data.get('details') or {}
+        basic = parsed_data.get('basic') or {}
+
+        cursor.execute('''
+            INSERT OR IGNORE INTO bronze_weapons (
+                raw_id, id_alliance, country_name, country_link, weapon_name, weapon_link,
+                origin_country, weapon_type, caliber, capacity, length, barrel_length,
+                weight, range_value, muzzle_velocity, img
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            raw_id,
+            id_alliance,
+            basic.get('country_name'),
+            basic.get('country_link'),
+            basic.get('weapon_name'),
+            basic.get('weapon_link'),
+            details.get('country'),
+            details.get('type'),
+            details.get('caliber'),
+            details.get('capacity'),
+            details.get('lenght'),
+            details.get('barrel_lenght'),
+            details.get('weight'),
+            details.get('range'),
+            details.get('muzzle_velocity'),
+            details.get('img')
+        ))
+
+        if cursor.lastrowid:
+            bronze_id = cursor.lastrowid
+        else:
+            cursor.execute('''
+                SELECT id FROM bronze_weapons
+                WHERE raw_id = ?
+                ORDER BY id LIMIT 1
+            ''', (raw_id,))
+            row = cursor.fetchone()
+            bronze_id = row[0] if row else None
+
+        conn.commit()
+        return bronze_id
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def insert_silver_weapon(bronze_id: int, parsed_data: dict, section: str):
+    """Insert normalized data into silver_weapons."""
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    try:
+        id_alliance = _get_id_alliance(cursor, section)
+        details = parsed_data.get('details') or {}
+        basic = parsed_data.get('basic') or {}
+
+        basic_weapon_name = (basic.get('weapon_name') or '').strip() or None
+        full_name = (details.get('name') or '').strip() or basic_weapon_name
+
+        origin_country = (details.get('country') or '').strip() or None
+        weapon_type = (details.get('type') or '').strip() or None
+        caliber = (details.get('caliber') or '').strip() or None
+        capacity = (details.get('capacity') or '').strip() or None
+        length = (details.get('lenght') or '').strip() or None
+        barrel_length = (details.get('barrel_lenght') or '').strip() or None
+        weight = (details.get('weight') or '').strip() or None
+        range_value = (details.get('range') or '').strip() or None
+        muzzle_velocity = (details.get('muzzle_velocity') or '').strip() or None
+        img = (details.get('img') or '').strip() or None
+
+        cursor.execute('''
+            INSERT OR IGNORE INTO silver_weapons (
+                bronze_id, id_alliance, full_name, country_name, country_link, weapon_link,
+                origin_country, weapon_type, caliber, capacity, length, barrel_length,
+                weight, range_value, muzzle_velocity, img
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            bronze_id,
+            id_alliance,
+            full_name,
+            basic.get('country_name'),
+            basic.get('country_link'),
+            basic.get('weapon_link'),
+            origin_country,
+            weapon_type,
+            caliber,
+            capacity,
+            length,
+            barrel_length,
+            weight,
+            range_value,
+            muzzle_velocity,
+            img
+        ))
+
+        if cursor.lastrowid:
+            silver_id = cursor.lastrowid
+        else:
+            cursor.execute('''
+                SELECT id FROM silver_weapons
+                WHERE bronze_id = ?
+                ORDER BY id LIMIT 1
+            ''', (bronze_id,))
+            row = cursor.fetchone()
+            silver_id = row[0] if row else None
+
+        conn.commit()
+        return silver_id
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def refresh_gold_weapon_metrics(section: str):
+    """Recalculate weapon aggregation metrics for given section."""
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    try:
+        id_alliance = _get_id_alliance(cursor, section)
+        cursor.execute('''
+            SELECT
+                COUNT(1),
+                SUM(CASE
+                    WHEN weapon_type IS NULL OR TRIM(weapon_type) = '' THEN 1
+                    ELSE 0
+                END)
+            FROM silver_weapons
+            WHERE id_alliance = ?
+        ''', (id_alliance,))
+        row = cursor.fetchone()
+        weapon_count, unknown_type_count = row
+
+        cursor.execute('''
+            INSERT INTO gold_weapon_metrics (id_alliance, weapon_count, unknown_type_count, updated_at)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(id_alliance) DO UPDATE SET
+                weapon_count=excluded.weapon_count,
+                unknown_type_count=excluded.unknown_type_count,
+                updated_at=CURRENT_TIMESTAMP
+        ''', (
+            id_alliance,
+            weapon_count or 0,
+            unknown_type_count or 0
         ))
         conn.commit()
     finally:
@@ -675,6 +1125,10 @@ def clear_db():
     cursor.execute('DELETE FROM bronze_persons')
     cursor.execute('DELETE FROM silver_persons')
     cursor.execute('DELETE FROM gold_person_metrics')
+    cursor.execute('DELETE FROM raw_weapons')
+    cursor.execute('DELETE FROM bronze_weapons')
+    cursor.execute('DELETE FROM silver_weapons')
+    cursor.execute('DELETE FROM gold_weapon_metrics')
     cursor.execute('DELETE FROM alliances')
     
     conn.commit()
