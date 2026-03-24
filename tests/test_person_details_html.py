@@ -10,7 +10,7 @@ import sys
 src_path = os.path.join(os.path.dirname(__file__), "..", "src")
 sys.path.insert(0, src_path)
 
-from parse.person_details import parse_person_details_from_html
+from transform.persons import parse_person_details_from_html
 
 
 def main() -> None:

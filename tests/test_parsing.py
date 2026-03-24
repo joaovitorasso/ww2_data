@@ -10,8 +10,8 @@ import os
 src_path = os.path.join(os.path.dirname(__file__), "..", "src")
 sys.path.insert(0, src_path)
 
-from parse.country_details import parse_country_details
-from parse.person_details import parse_person_details
+from transform.countries import parse_country_details
+from transform.persons import parse_person_details
 
 def test_parsing():
     """Test parsing a single country."""

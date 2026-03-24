@@ -1,2 +1,2 @@
-"""Pipeline orchestrators (countries, persons, etc.)."""
+"""Pipeline orchestrators grouped by domain."""
 

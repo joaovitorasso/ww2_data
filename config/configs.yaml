@@ -7,3 +7,7 @@ link:
   - equipments: https://ww2db.com/equip.php
   - events: https://ww2db.com/event/
   - peoples: https://ww2db.com/person.php
+
+retry_queue:
+  post_pipeline_wait_seconds: 20
+  max_rows_per_run: 500

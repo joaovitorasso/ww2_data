@@ -3,7 +3,7 @@ import os
 
 try:
     from bs4 import BeautifulSoup
-    from src.utils.http import get_text
+    from src.utils.country_html_cache import get_country_html
 except ImportError:
     import sys
 
@@ -11,7 +11,7 @@ except ImportError:
     if src_root not in sys.path:
         sys.path.insert(0, src_root)
     from bs4 import BeautifulSoup
-    from utils.http import get_text
+    from utils.country_html_cache import get_country_html
 
 
 def _get_project_root():
@@ -50,9 +50,7 @@ def _parse_country_people(html: str) -> list[dict]:
 
 
 def _fetch_country_people(country_link: str) -> list[dict]:
-    base_url = "https://ww2db.com"
-    full_url = country_link if country_link.startswith("http") else (base_url + country_link)
-    html = get_text(full_url)
+    html = get_country_html(country_link, fetch_if_missing=True)
     return _parse_country_people(html)
 
 

@@ -10,7 +10,7 @@ import sys
 src_path = os.path.join(os.path.dirname(__file__), "..", "src")
 sys.path.insert(0, src_path)
 
-from parse.weapon_details import parse_weapon_details_from_html
+from transform.weapons import parse_weapon_details_from_html
 
 
 def main() -> None:
@@ -52,4 +52,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
