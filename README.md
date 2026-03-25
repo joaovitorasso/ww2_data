@@ -81,7 +81,7 @@ The current warehouse scope is up to the `silver` layer (`raw -> bronze -> silve
 
 ## SQLite Model (Current)
 
-- **Data layers**: `raw_*`, `bronze_*`, `silver_*` (no `gold_*` tables).
+- **Data layers**: `raw_*`, `bronze_*`, `silver_*`.
 - **Main dimensions**:
   - `alliances`
   - `raw_countries` (central country id used by persons/weapons via `country_id`)
