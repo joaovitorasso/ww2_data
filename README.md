@@ -1,6 +1,6 @@
 # WW2 Data Extraction Project
 
-This project extracts data from WW2DB, transforms it, and loads the results into JSON and SQLite.
+This project extracts data from WW2DB, transforms it, and loads the results into SQLite Database.
 The current warehouse scope is up to the `silver` layer (`raw -> bronze -> silver`).
 
 ## Project Structure
@@ -93,7 +93,6 @@ The current warehouse scope is up to the `silver` layer (`raw -> bronze -> silve
 ### Important DB choices
 
 - Foreign keys are enforced on every connection via `PRAGMA foreign_keys=ON`.
-- `init_db()` keeps migrations idempotent and removes legacy `gold_*` tables.
 - Deduplication relies on unique indexes + `INSERT OR IGNORE`.
 - Operational timestamps use Brasília time for logs and retry updates.
 
