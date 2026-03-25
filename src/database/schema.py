@@ -1,7 +1,5 @@
-import sqlite3
-
 try:
-    from src.database.common import get_db_path
+    from src.database.common import get_connection
 except ImportError:
     import os
     import sys
@@ -9,12 +7,12 @@ except ImportError:
     src_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     if src_root not in sys.path:
         sys.path.insert(0, src_root)
-    from database.common import get_db_path
+    from database.common import get_connection
 
 
 def init_db() -> None:
     """Create or migrate database schema."""
-    conn = sqlite3.connect(get_db_path())
+    conn = get_connection()
     cursor = conn.cursor()
 
     def _has_column(table_name: str, column_name: str) -> bool:
@@ -32,8 +30,6 @@ def init_db() -> None:
             (table_name,),
         )
         return cursor.fetchone() is not None
-
-    cursor.execute("DROP TABLE IF EXISTS countries")
 
     cursor.execute(
         """
@@ -354,56 +350,9 @@ def init_db() -> None:
         """
     )
 
-    old_gold_table_exists = _table_exists("gold_section_metrics")
-    new_gold_table_exists = _table_exists("gold_alliance_metrics")
-    if old_gold_table_exists and not new_gold_table_exists:
-        cursor.execute("ALTER TABLE gold_section_metrics RENAME TO gold_alliance_metrics")
-    elif old_gold_table_exists and new_gold_table_exists:
-        cursor.execute(
-            """
-            INSERT OR IGNORE INTO gold_alliance_metrics (
-                id_alliance, country_count, total_military_deaths, total_civilian_deaths,
-                total_holocaust_deaths, total_population, average_population, updated_at
-            )
-            SELECT
-                id_alliance, country_count, total_military_deaths, total_civilian_deaths,
-                total_holocaust_deaths, total_population, average_population, updated_at
-            FROM gold_section_metrics
-            """
-        )
-        cursor.execute("DROP TABLE gold_section_metrics")
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS gold_alliance_metrics (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_alliance INTEGER UNIQUE,
-            country_count INTEGER,
-            total_military_deaths INTEGER,
-            total_civilian_deaths INTEGER,
-            total_holocaust_deaths INTEGER,
-            total_population INTEGER,
-            average_population REAL,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE CASCADE
-        )
-        """
-    )
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS gold_person_metrics (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_alliance INTEGER UNIQUE,
-            person_count INTEGER,
-            male_count INTEGER,
-            female_count INTEGER,
-            unknown_gender_count INTEGER,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE CASCADE
-        )
-        """
-    )
+    cursor.execute("DROP TABLE IF EXISTS gold_section_metrics")
+    cursor.execute("DROP TABLE IF EXISTS gold_alliance_metrics")
+    cursor.execute("DROP TABLE IF EXISTS gold_person_metrics")
 
     cursor.execute(
         """
@@ -572,18 +521,7 @@ def init_db() -> None:
         """
     )
 
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS gold_weapon_metrics (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_alliance INTEGER UNIQUE,
-            weapon_count INTEGER,
-            unknown_type_count INTEGER,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE CASCADE
-        )
-        """
-    )
+    cursor.execute("DROP TABLE IF EXISTS gold_weapon_metrics")
 
     cursor.execute(
         """
@@ -610,7 +548,7 @@ def init_db() -> None:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             raw_id INTEGER,
             country_id INTEGER,
-            alliance TEXT NOT NULL,
+            id_alliance INTEGER,
             country_name TEXT,
             person_name TEXT,
             person_link TEXT,
@@ -620,8 +558,9 @@ def init_db() -> None:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(raw_id) REFERENCES raw_persons(id) ON DELETE CASCADE,
+            FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE SET NULL,
             FOREIGN KEY(country_id) REFERENCES raw_countries(id) ON DELETE SET NULL,
-            UNIQUE(alliance, person_link)
+            UNIQUE(id_alliance, person_link)
         )
         """
     )
@@ -632,7 +571,7 @@ def init_db() -> None:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             raw_id INTEGER,
             country_id INTEGER,
-            alliance TEXT NOT NULL,
+            id_alliance INTEGER,
             country_name TEXT,
             weapon_name TEXT,
             weapon_link TEXT,
@@ -642,8 +581,9 @@ def init_db() -> None:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(raw_id) REFERENCES raw_weapons(id) ON DELETE CASCADE,
+            FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE SET NULL,
             FOREIGN KEY(country_id) REFERENCES raw_countries(id) ON DELETE SET NULL,
-            UNIQUE(alliance, weapon_link)
+            UNIQUE(id_alliance, weapon_link)
         )
         """
     )
@@ -683,6 +623,7 @@ def init_db() -> None:
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS country_html_cache_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             total INTEGER NOT NULL,
             cached INTEGER NOT NULL,
@@ -691,6 +632,125 @@ def init_db() -> None:
         )
         """
     )
+
+    if _table_exists("retry_persons") and _has_column("retry_persons", "alliance") and not _has_column("retry_persons", "id_alliance"):
+        cursor.execute("ALTER TABLE retry_persons RENAME TO retry_persons_legacy")
+        cursor.execute(
+            """
+            CREATE TABLE retry_persons (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                raw_id INTEGER,
+                country_id INTEGER,
+                id_alliance INTEGER,
+                country_name TEXT,
+                person_name TEXT,
+                person_link TEXT,
+                payload TEXT NOT NULL,
+                last_error TEXT,
+                retry_count INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(raw_id) REFERENCES raw_persons(id) ON DELETE CASCADE,
+                FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE SET NULL,
+                FOREIGN KEY(country_id) REFERENCES raw_countries(id) ON DELETE SET NULL,
+                UNIQUE(id_alliance, person_link)
+            )
+            """
+        )
+        cursor.execute(
+            """
+            INSERT OR IGNORE INTO retry_persons (
+                raw_id, country_id, id_alliance, country_name, person_name, person_link,
+                payload, last_error, retry_count, created_at, updated_at
+            )
+            SELECT
+                rp.raw_id,
+                rp.country_id,
+                a.id_alliance,
+                rp.country_name,
+                rp.person_name,
+                rp.person_link,
+                rp.payload,
+                rp.last_error,
+                rp.retry_count,
+                rp.created_at,
+                rp.updated_at
+            FROM retry_persons_legacy rp
+            LEFT JOIN alliances a ON a.alliance_name = rp.alliance
+            """
+        )
+        cursor.execute("DROP TABLE retry_persons_legacy")
+
+    if _table_exists("retry_weapons") and _has_column("retry_weapons", "alliance") and not _has_column("retry_weapons", "id_alliance"):
+        cursor.execute("ALTER TABLE retry_weapons RENAME TO retry_weapons_legacy")
+        cursor.execute(
+            """
+            CREATE TABLE retry_weapons (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                raw_id INTEGER,
+                country_id INTEGER,
+                id_alliance INTEGER,
+                country_name TEXT,
+                weapon_name TEXT,
+                weapon_link TEXT,
+                payload TEXT NOT NULL,
+                last_error TEXT,
+                retry_count INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(raw_id) REFERENCES raw_weapons(id) ON DELETE CASCADE,
+                FOREIGN KEY(id_alliance) REFERENCES alliances(id_alliance) ON DELETE SET NULL,
+                FOREIGN KEY(country_id) REFERENCES raw_countries(id) ON DELETE SET NULL,
+                UNIQUE(id_alliance, weapon_link)
+            )
+            """
+        )
+        cursor.execute(
+            """
+            INSERT OR IGNORE INTO retry_weapons (
+                raw_id, country_id, id_alliance, country_name, weapon_name, weapon_link,
+                payload, last_error, retry_count, created_at, updated_at
+            )
+            SELECT
+                rw.raw_id,
+                rw.country_id,
+                a.id_alliance,
+                rw.country_name,
+                rw.weapon_name,
+                rw.weapon_link,
+                rw.payload,
+                rw.last_error,
+                rw.retry_count,
+                rw.created_at,
+                rw.updated_at
+            FROM retry_weapons_legacy rw
+            LEFT JOIN alliances a ON a.alliance_name = rw.alliance
+            """
+        )
+        cursor.execute("DROP TABLE retry_weapons_legacy")
+
+    if _table_exists("country_html_cache_log") and not _has_column("country_html_cache_log", "id"):
+        cursor.execute("ALTER TABLE country_html_cache_log RENAME TO country_html_cache_log_legacy")
+        cursor.execute(
+            """
+            CREATE TABLE country_html_cache_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                total INTEGER NOT NULL,
+                cached INTEGER NOT NULL,
+                fetched INTEGER NOT NULL,
+                errors INTEGER NOT NULL
+            )
+            """
+        )
+        cursor.execute(
+            """
+            INSERT INTO country_html_cache_log (data, total, cached, fetched, errors)
+            SELECT data, total, cached, fetched, errors
+            FROM country_html_cache_log_legacy
+            """
+        )
+        cursor.execute("DROP TABLE country_html_cache_log_legacy")
 
     # Migration for existing databases: add standardized ID columns when missing
     if not _has_column("silver_countries", "raw_id"):
@@ -705,6 +765,10 @@ def init_db() -> None:
         cursor.execute("ALTER TABLE retry_persons ADD COLUMN raw_id INTEGER")
     if not _has_column("retry_weapons", "raw_id"):
         cursor.execute("ALTER TABLE retry_weapons ADD COLUMN raw_id INTEGER")
+    if not _has_column("retry_persons", "id_alliance"):
+        cursor.execute("ALTER TABLE retry_persons ADD COLUMN id_alliance INTEGER")
+    if not _has_column("retry_weapons", "id_alliance"):
+        cursor.execute("ALTER TABLE retry_weapons ADD COLUMN id_alliance INTEGER")
     if not _has_column("raw_persons", "country_id"):
         cursor.execute("ALTER TABLE raw_persons ADD COLUMN country_id INTEGER")
     if not _has_column("bronze_persons", "country_id"):
@@ -870,11 +934,21 @@ def init_db() -> None:
     cursor.execute(
         """
         UPDATE retry_persons
+        SET id_alliance = (
+            SELECT rp.id_alliance
+            FROM raw_persons rp
+            WHERE rp.id = retry_persons.raw_id
+        )
+        WHERE id_alliance IS NULL
+        """
+    )
+    cursor.execute(
+        """
+        UPDATE retry_persons
         SET raw_id = (
             SELECT rp.id
             FROM raw_persons rp
-            JOIN alliances a ON a.id_alliance = rp.id_alliance
-            WHERE a.alliance_name = retry_persons.alliance
+            WHERE rp.id_alliance = retry_persons.id_alliance
               AND rp.person_link = retry_persons.person_link
             ORDER BY rp.id
             LIMIT 1
@@ -896,11 +970,21 @@ def init_db() -> None:
     cursor.execute(
         """
         UPDATE retry_weapons
+        SET id_alliance = (
+            SELECT rw.id_alliance
+            FROM raw_weapons rw
+            WHERE rw.id = retry_weapons.raw_id
+        )
+        WHERE id_alliance IS NULL
+        """
+    )
+    cursor.execute(
+        """
+        UPDATE retry_weapons
         SET raw_id = (
             SELECT rw.id
             FROM raw_weapons rw
-            JOIN alliances a ON a.id_alliance = rw.id_alliance
-            WHERE a.alliance_name = retry_weapons.alliance
+            WHERE rw.id_alliance = retry_weapons.id_alliance
               AND rw.weapon_link = retry_weapons.weapon_link
             ORDER BY rw.id
             LIMIT 1
@@ -958,9 +1042,51 @@ def init_db() -> None:
     )
     cursor.execute(
         """
+        DELETE FROM retry_persons
+        WHERE id_alliance IS NOT NULL
+          AND person_link IS NOT NULL
+          AND id NOT IN (
+              SELECT MIN(id)
+              FROM retry_persons
+              WHERE id_alliance IS NOT NULL
+                AND person_link IS NOT NULL
+              GROUP BY id_alliance, person_link
+          )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_retry_persons_alliance_link
+        ON retry_persons(id_alliance, person_link)
+        WHERE id_alliance IS NOT NULL AND person_link IS NOT NULL
+        """
+    )
+    cursor.execute(
+        """
         CREATE UNIQUE INDEX IF NOT EXISTS uq_retry_weapons_raw_id
         ON retry_weapons(raw_id)
         WHERE raw_id IS NOT NULL
+        """
+    )
+    cursor.execute(
+        """
+        DELETE FROM retry_weapons
+        WHERE id_alliance IS NOT NULL
+          AND weapon_link IS NOT NULL
+          AND id NOT IN (
+              SELECT MIN(id)
+              FROM retry_weapons
+              WHERE id_alliance IS NOT NULL
+                AND weapon_link IS NOT NULL
+              GROUP BY id_alliance, weapon_link
+          )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_retry_weapons_alliance_link
+        ON retry_weapons(id_alliance, weapon_link)
+        WHERE id_alliance IS NOT NULL AND weapon_link IS NOT NULL
         """
     )
     cursor.execute(
@@ -1038,15 +1164,12 @@ def init_db() -> None:
         "raw_countries",
         "bronze_countries",
         "silver_countries",
-        "gold_alliance_metrics",
         "raw_persons",
         "bronze_persons",
         "silver_persons",
-        "gold_person_metrics",
         "raw_weapons",
         "bronze_weapons",
         "silver_weapons",
-        "gold_weapon_metrics",
         "retry_countries",
         "retry_persons",
         "retry_weapons",

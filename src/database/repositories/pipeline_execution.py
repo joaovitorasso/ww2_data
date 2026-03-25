@@ -1,7 +1,7 @@
 import sqlite3
 
 try:
-    from src.database.common import get_db_path, now_brasilia_str
+    from src.database.common import get_connection, now_brasilia_str
 except ImportError:
     import os
     import sys
@@ -9,11 +9,11 @@ except ImportError:
     src_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     if src_root not in sys.path:
         sys.path.insert(0, src_root)
-    from database.common import get_db_path, now_brasilia_str
+    from database.common import get_connection, now_brasilia_str
 
 
 def start_pipeline_execution(pipeline_type: str) -> int:
-    conn = sqlite3.connect(get_db_path())
+    conn = get_connection()
     cursor = conn.cursor()
     try:
         normalized_pipeline_type = (pipeline_type or "").strip() or "unknown"
@@ -59,7 +59,7 @@ def start_pipeline_execution(pipeline_type: str) -> int:
 
 
 def finish_pipeline_execution(execution_id: int, status: str = "completed") -> None:
-    conn = sqlite3.connect(get_db_path())
+    conn = get_connection()
     cursor = conn.cursor()
     try:
         normalized_status = (status or "completed").strip().lower()
@@ -98,8 +98,7 @@ def finish_pipeline_execution(execution_id: int, status: str = "completed") -> N
 
 
 def get_pipeline_execution_logs(limit: int | None = None):
-    conn = sqlite3.connect(get_db_path())
-    conn.row_factory = sqlite3.Row
+    conn = get_connection(row_factory=sqlite3.Row)
     cursor = conn.cursor()
     try:
         query = "SELECT * FROM pipeline_execution_log ORDER BY id DESC"

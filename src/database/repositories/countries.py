@@ -2,7 +2,7 @@ import json
 import sqlite3
 
 try:
-    from src.database.common import get_db_path, get_or_create_alliance_id, now_brasilia_str
+    from src.database.common import get_connection, get_or_create_alliance_id, now_brasilia_str
 except ImportError:
     import os
     import sys
@@ -10,11 +10,11 @@ except ImportError:
     src_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     if src_root not in sys.path:
         sys.path.insert(0, src_root)
-    from database.common import get_db_path, get_or_create_alliance_id, now_brasilia_str
+    from database.common import get_connection, get_or_create_alliance_id, now_brasilia_str
 
 
 def insert_raw_country(raw_payload: dict, section: str):
-    conn = sqlite3.connect(get_db_path())
+    conn = get_connection()
     cursor = conn.cursor()
     try:
         id_alliance = get_or_create_alliance_id(cursor, section)
@@ -59,7 +59,7 @@ def insert_raw_country(raw_payload: dict, section: str):
 
 
 def insert_bronze_country(raw_id: int, parsed_data: dict, section: str):
-    conn = sqlite3.connect(get_db_path())
+    conn = get_connection()
     cursor = conn.cursor()
     try:
         id_alliance = get_or_create_alliance_id(cursor, section)
@@ -111,7 +111,7 @@ def insert_bronze_country(raw_id: int, parsed_data: dict, section: str):
 
 
 def insert_silver_country(bronze_id: int, parsed_data: dict, section: str):
-    conn = sqlite3.connect(get_db_path())
+    conn = get_connection()
     cursor = conn.cursor()
     try:
         id_alliance = get_or_create_alliance_id(cursor, section)
@@ -174,70 +174,8 @@ def insert_silver_country(bronze_id: int, parsed_data: dict, section: str):
         conn.close()
 
 
-def refresh_gold_metrics(section: str):
-    conn = sqlite3.connect(get_db_path())
-    cursor = conn.cursor()
-    try:
-        id_alliance = get_or_create_alliance_id(cursor, section)
-        cursor.execute(
-            """
-            SELECT
-                COUNT(1),
-                SUM(military_deaths),
-                SUM(civilian_deaths),
-                SUM(civilian_holocaust_deaths),
-                SUM(population)
-            FROM silver_countries
-            WHERE id_alliance = ?
-            """,
-            (id_alliance,),
-        )
-        row = cursor.fetchone()
-        country_count, sum_military, sum_civilian, sum_holocaust, sum_population = row
-        avg_population = None
-        if country_count and country_count > 0 and sum_population is not None:
-            avg_population = sum_population / country_count
-
-        cursor.execute(
-            """
-            INSERT INTO gold_alliance_metrics (
-                id_alliance, country_count, total_military_deaths, total_civilian_deaths,
-                total_holocaust_deaths, total_population, average_population, updated_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(id_alliance) DO UPDATE SET
-                country_count=excluded.country_count,
-                total_military_deaths=excluded.total_military_deaths,
-                total_civilian_deaths=excluded.total_civilian_deaths,
-                total_holocaust_deaths=excluded.total_holocaust_deaths,
-                total_population=excluded.total_population,
-                average_population=excluded.average_population,
-                updated_at=CURRENT_TIMESTAMP
-            WHERE gold_alliance_metrics.country_count IS NOT excluded.country_count
-               OR gold_alliance_metrics.total_military_deaths IS NOT excluded.total_military_deaths
-               OR gold_alliance_metrics.total_civilian_deaths IS NOT excluded.total_civilian_deaths
-               OR gold_alliance_metrics.total_holocaust_deaths IS NOT excluded.total_holocaust_deaths
-               OR gold_alliance_metrics.total_population IS NOT excluded.total_population
-               OR gold_alliance_metrics.average_population IS NOT excluded.average_population
-            """,
-            (
-                id_alliance,
-                country_count or 0,
-                sum_military or 0,
-                sum_civilian or 0,
-                sum_holocaust or 0,
-                sum_population or 0,
-                avg_population,
-            ),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
-
 def get_silver_countries_by_alliance(alliance_name: str):
-    conn = sqlite3.connect(get_db_path())
-    conn.row_factory = sqlite3.Row
+    conn = get_connection(row_factory=sqlite3.Row)
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -254,26 +192,8 @@ def get_silver_countries_by_alliance(alliance_name: str):
     return [dict(row) for row in rows]
 
 
-def get_gold_metrics_by_alliance(alliance_name: str):
-    conn = sqlite3.connect(get_db_path())
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT gm.*
-        FROM gold_alliance_metrics gm
-        JOIN alliances a ON gm.id_alliance = a.id_alliance
-        WHERE a.alliance_name = ?
-        """,
-        (alliance_name,),
-    )
-    row = cursor.fetchone()
-    conn.close()
-    return dict(row) if row else None
-
-
 def insert_country_html_cache_log(total: int, cached: int, fetched: int, errors: int) -> None:
-    conn = sqlite3.connect(get_db_path())
+    conn = get_connection()
     cursor = conn.cursor()
     try:
         now_str = now_brasilia_str()
@@ -296,10 +216,9 @@ def insert_country_html_cache_log(total: int, cached: int, fetched: int, errors:
 
 
 def get_country_html_cache_logs(limit: int | None = None):
-    conn = sqlite3.connect(get_db_path())
-    conn.row_factory = sqlite3.Row
+    conn = get_connection(row_factory=sqlite3.Row)
     cursor = conn.cursor()
-    query = "SELECT data, total, cached, fetched, errors FROM country_html_cache_log ORDER BY rowid DESC"
+    query = "SELECT id, data, total, cached, fetched, errors FROM country_html_cache_log ORDER BY id DESC"
     params = ()
     if limit is not None:
         query += " LIMIT ?"

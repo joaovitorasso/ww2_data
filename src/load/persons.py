@@ -8,7 +8,6 @@ try:
         insert_raw_person,
         insert_bronze_person,
         insert_silver_person,
-        refresh_gold_person_metrics,
     )
     from src.utils.retry_queue import is_429_error
 except ImportError:
@@ -23,7 +22,6 @@ except ImportError:
         insert_raw_person,
         insert_bronze_person,
         insert_silver_person,
-        refresh_gold_person_metrics,
     )
     from utils.retry_queue import is_429_error
 
@@ -90,8 +88,6 @@ def import_details_to_db(detailed_data: dict[str, list[dict]], limit: int | None
             finally:
                 if remaining is not None:
                     remaining -= 1
-
-        refresh_gold_person_metrics(alliance)
 
 
 def load_transformed_data(

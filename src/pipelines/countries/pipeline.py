@@ -12,7 +12,6 @@ try:
         insert_silver_country,
         mark_retry_country_failed,
         mark_retry_country_succeeded,
-        refresh_gold_metrics,
         start_pipeline_execution,
     )
     from src.extract.countries import cache_country_pages, ensure_countries_html_cache, extract_countries
@@ -36,7 +35,6 @@ except ImportError:
         insert_silver_country,
         mark_retry_country_failed,
         mark_retry_country_succeeded,
-        refresh_gold_metrics,
         start_pipeline_execution,
     )
     from extract.countries import cache_country_pages, ensure_countries_html_cache, extract_countries
@@ -75,8 +73,6 @@ def _process_country_retry_queue() -> None:
 
     succeeded = 0
     failed = 0
-    touched_sections = set()
-
     for row in pending:
         retry_id = row.get("id")
         section = row.get("section")
@@ -96,14 +92,10 @@ def _process_country_retry_queue() -> None:
             bronze_id = insert_bronze_country(raw_id, raw_payload, section)
             insert_silver_country(bronze_id, raw_payload, section)
             mark_retry_country_succeeded(retry_id)
-            touched_sections.add(section)
             succeeded += 1
         except Exception as exc:
             mark_retry_country_failed(retry_id, str(exc))
             failed += 1
-
-    for section in touched_sections:
-        refresh_gold_metrics(section)
 
     remaining = len(get_retry_countries(limit=max_rows))
     print(f"Countries retry queue finished. success={succeeded}, failed={failed}, remaining={remaining}")

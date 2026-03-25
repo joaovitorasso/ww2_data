@@ -14,7 +14,6 @@ try:
         insert_silver_person,
         mark_retry_person_failed,
         mark_retry_person_succeeded,
-        refresh_gold_person_metrics,
         start_pipeline_execution,
     )
     from src.extract.persons import extract_persons
@@ -37,7 +36,6 @@ except ImportError:
         insert_silver_person,
         mark_retry_person_failed,
         mark_retry_person_succeeded,
-        refresh_gold_person_metrics,
         start_pipeline_execution,
     )
     from extract.persons import extract_persons
@@ -73,8 +71,6 @@ def _process_person_retry_queue() -> None:
 
     succeeded = 0
     failed = 0
-    touched_alliances = set()
-
     for row in pending:
         retry_id = row.get("id")
         alliance = row.get("alliance")
@@ -94,14 +90,10 @@ def _process_person_retry_queue() -> None:
             bronze_id = insert_bronze_person(raw_id, raw_payload, alliance)
             insert_silver_person(bronze_id, raw_payload, alliance)
             mark_retry_person_succeeded(retry_id)
-            touched_alliances.add(alliance)
             succeeded += 1
         except Exception as exc:
             mark_retry_person_failed(retry_id, str(exc))
             failed += 1
-
-    for alliance in touched_alliances:
-        refresh_gold_person_metrics(alliance)
 
     remaining = len(get_retry_persons(limit=max_rows))
     print(f"Persons retry queue finished. success={succeeded}, failed={failed}, remaining={remaining}")

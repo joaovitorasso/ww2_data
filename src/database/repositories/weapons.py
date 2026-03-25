@@ -2,7 +2,7 @@ import json
 import sqlite3
 
 try:
-    from src.database.common import get_db_path, get_or_create_alliance_id, get_or_create_country_id
+    from src.database.common import get_connection, get_or_create_alliance_id, get_or_create_country_id
 except ImportError:
     import os
     import sys
@@ -10,11 +10,11 @@ except ImportError:
     src_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     if src_root not in sys.path:
         sys.path.insert(0, src_root)
-    from database.common import get_db_path, get_or_create_alliance_id, get_or_create_country_id
+    from database.common import get_connection, get_or_create_alliance_id, get_or_create_country_id
 
 
 def insert_raw_weapon(raw_payload: dict, section: str):
-    conn = sqlite3.connect(get_db_path())
+    conn = get_connection()
     cursor = conn.cursor()
     try:
         id_alliance = get_or_create_alliance_id(cursor, section)
@@ -68,7 +68,7 @@ def insert_raw_weapon(raw_payload: dict, section: str):
 
 
 def insert_bronze_weapon(raw_id: int, parsed_data: dict, section: str):
-    conn = sqlite3.connect(get_db_path())
+    conn = get_connection()
     cursor = conn.cursor()
     try:
         id_alliance = get_or_create_alliance_id(cursor, section)
@@ -135,7 +135,7 @@ def insert_bronze_weapon(raw_id: int, parsed_data: dict, section: str):
 
 
 def insert_silver_weapon(bronze_id: int, parsed_data: dict, section: str):
-    conn = sqlite3.connect(get_db_path())
+    conn = get_connection()
     cursor = conn.cursor()
     try:
         id_alliance = get_or_create_alliance_id(cursor, section)
@@ -212,45 +212,3 @@ def insert_silver_weapon(bronze_id: int, parsed_data: dict, section: str):
     finally:
         conn.close()
 
-
-def refresh_gold_weapon_metrics(section: str):
-    conn = sqlite3.connect(get_db_path())
-    cursor = conn.cursor()
-    try:
-        id_alliance = get_or_create_alliance_id(cursor, section)
-        cursor.execute(
-            """
-            SELECT
-                COUNT(1),
-                SUM(CASE
-                    WHEN weapon_type IS NULL OR TRIM(weapon_type) = '' THEN 1
-                    ELSE 0
-                END)
-            FROM silver_weapons
-            WHERE id_alliance = ?
-            """,
-            (id_alliance,),
-        )
-        row = cursor.fetchone()
-        weapon_count, unknown_type_count = row
-
-        cursor.execute(
-            """
-            INSERT INTO gold_weapon_metrics (id_alliance, weapon_count, unknown_type_count, updated_at)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(id_alliance) DO UPDATE SET
-                weapon_count=excluded.weapon_count,
-                unknown_type_count=excluded.unknown_type_count,
-                updated_at=CURRENT_TIMESTAMP
-            WHERE gold_weapon_metrics.weapon_count IS NOT excluded.weapon_count
-               OR gold_weapon_metrics.unknown_type_count IS NOT excluded.unknown_type_count
-            """,
-            (
-                id_alliance,
-                weapon_count or 0,
-                unknown_type_count or 0,
-            ),
-        )
-        conn.commit()
-    finally:
-        conn.close()

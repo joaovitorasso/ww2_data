@@ -8,7 +8,6 @@ try:
         insert_raw_country,
         insert_bronze_country,
         insert_silver_country,
-        refresh_gold_metrics,
     )
     from src.utils.retry_queue import is_429_error
 except ImportError:
@@ -23,7 +22,6 @@ except ImportError:
         insert_raw_country,
         insert_bronze_country,
         insert_silver_country,
-        refresh_gold_metrics,
     )
     from utils.retry_queue import is_429_error
 
@@ -77,8 +75,6 @@ def import_details_to_db(detailed_data: dict[str, list[dict]]) -> None:
             except Exception as exc:
                 name = (payload or {}).get("basic", {}).get("name") if isinstance(payload, dict) else None
                 print(f"    Error importing {name or 'country'}: {exc}")
-
-        refresh_gold_metrics(section)
 
 
 def load_transformed_data(detailed_data: dict[str, list[dict]], save_json: bool = True) -> str | None:

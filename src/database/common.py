@@ -17,6 +17,14 @@ def get_db_path() -> str:
     return os.path.join(db_folder, "ww2.db")
 
 
+def get_connection(*, row_factory: sqlite3.Row | None = None) -> sqlite3.Connection:
+    conn = sqlite3.connect(get_db_path())
+    conn.execute("PRAGMA foreign_keys = ON")
+    if row_factory is not None:
+        conn.row_factory = row_factory
+    return conn
+
+
 def now_brasilia_str() -> str:
     if ZoneInfo is not None:
         dt = datetime.now(ZoneInfo("America/Sao_Paulo"))

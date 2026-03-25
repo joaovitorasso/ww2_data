@@ -16,3 +16,6 @@ src/models/aircraft.py
 src/models/event.py
 src/models/ship.py
 src/models/vehicle.py
+
+# Local engineering notes
+DEV.md

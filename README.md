@@ -1,6 +1,7 @@
 # WW2 Data Extraction Project
 
 This project extracts data from WW2DB, transforms it, and loads the results into JSON and SQLite.
+The current warehouse scope is up to the `silver` layer (`raw -> bronze -> silver`).
 
 ## Project Structure
 
@@ -78,6 +79,24 @@ This project extracts data from WW2DB, transforms it, and loads the results into
 - `src/transform/*.py`: HTML parsing to dataclasses
 - `src/load/*.py`: JSON and SQLite loading
 
+## SQLite Model (Current)
+
+- **Data layers**: `raw_*`, `bronze_*`, `silver_*` (no `gold_*` tables).
+- **Main dimensions**:
+  - `alliances`
+  - `raw_countries` (central country id used by persons/weapons via `country_id`)
+- **Retry queues**:
+  - `retry_countries`
+  - `retry_persons` (uses `id_alliance` FK)
+  - `retry_weapons` (uses `id_alliance` FK)
+
+### Important DB choices
+
+- Foreign keys are enforced on every connection via `PRAGMA foreign_keys=ON`.
+- `init_db()` keeps migrations idempotent and removes legacy `gold_*` tables.
+- Deduplication relies on unique indexes + `INSERT OR IGNORE`.
+- Operational timestamps use Brasília time for logs and retry updates.
+
 ## 429 Retry Queue
 
 Retry queue tables in SQLite:
@@ -112,7 +131,8 @@ Running `python -B src/pipelines/orchestrator/pipeline.py` creates 3 rows (one p
 Table: `country_html_cache_log`
 
 Columns:
-- `data` (timestamp in Brasília time)
+- `id` (PK)
+- `data`
 - `total`
 - `cached`
 - `fetched`

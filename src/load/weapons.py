@@ -8,7 +8,6 @@ try:
         insert_raw_weapon,
         insert_bronze_weapon,
         insert_silver_weapon,
-        refresh_gold_weapon_metrics,
     )
     from src.utils.retry_queue import is_429_error
 except ImportError:
@@ -23,7 +22,6 @@ except ImportError:
         insert_raw_weapon,
         insert_bronze_weapon,
         insert_silver_weapon,
-        refresh_gold_weapon_metrics,
     )
     from utils.retry_queue import is_429_error
 
@@ -90,8 +88,6 @@ def import_details_to_db(detailed_data: dict[str, list[dict]], limit: int | None
             finally:
                 if remaining is not None:
                     remaining -= 1
-
-        refresh_gold_weapon_metrics(alliance)
 
 
 def load_transformed_data(

@@ -2,7 +2,7 @@ import json
 import sqlite3
 
 try:
-    from src.database.common import get_db_path, get_or_create_alliance_id, get_or_create_country_id
+    from src.database.common import get_connection, get_or_create_alliance_id, get_or_create_country_id
 except ImportError:
     import os
     import sys
@@ -10,11 +10,11 @@ except ImportError:
     src_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     if src_root not in sys.path:
         sys.path.insert(0, src_root)
-    from database.common import get_db_path, get_or_create_alliance_id, get_or_create_country_id
+    from database.common import get_connection, get_or_create_alliance_id, get_or_create_country_id
 
 
 def insert_raw_person(raw_payload: dict, section: str):
-    conn = sqlite3.connect(get_db_path())
+    conn = get_connection()
     cursor = conn.cursor()
     try:
         id_alliance = get_or_create_alliance_id(cursor, section)
@@ -68,7 +68,7 @@ def insert_raw_person(raw_payload: dict, section: str):
 
 
 def insert_bronze_person(raw_id: int, parsed_data: dict, section: str):
-    conn = sqlite3.connect(get_db_path())
+    conn = get_connection()
     cursor = conn.cursor()
     try:
         id_alliance = get_or_create_alliance_id(cursor, section)
@@ -144,7 +144,7 @@ def _split_basic_person_name(person_name: str):
 
 
 def insert_silver_person(bronze_id: int, parsed_data: dict, section: str):
-    conn = sqlite3.connect(get_db_path())
+    conn = get_connection()
     cursor = conn.cursor()
     try:
         id_alliance = get_or_create_alliance_id(cursor, section)
@@ -222,63 +222,8 @@ def insert_silver_person(bronze_id: int, parsed_data: dict, section: str):
         conn.close()
 
 
-def refresh_gold_person_metrics(section: str):
-    conn = sqlite3.connect(get_db_path())
-    cursor = conn.cursor()
-    try:
-        id_alliance = get_or_create_alliance_id(cursor, section)
-        cursor.execute(
-            """
-            SELECT
-                COUNT(1),
-                SUM(CASE WHEN LOWER(COALESCE(gender, '')) = 'male' THEN 1 ELSE 0 END),
-                SUM(CASE WHEN LOWER(COALESCE(gender, '')) = 'female' THEN 1 ELSE 0 END),
-                SUM(CASE
-                    WHEN gender IS NULL OR TRIM(gender) = '' THEN 1
-                    WHEN LOWER(gender) NOT IN ('male', 'female') THEN 1
-                    ELSE 0
-                END)
-            FROM silver_persons
-            WHERE id_alliance = ?
-            """,
-            (id_alliance,),
-        )
-        row = cursor.fetchone()
-        person_count, male_count, female_count, unknown_count = row
-
-        cursor.execute(
-            """
-            INSERT INTO gold_person_metrics (
-                id_alliance, person_count, male_count, female_count, unknown_gender_count, updated_at
-            )
-            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(id_alliance) DO UPDATE SET
-                person_count=excluded.person_count,
-                male_count=excluded.male_count,
-                female_count=excluded.female_count,
-                unknown_gender_count=excluded.unknown_gender_count,
-                updated_at=CURRENT_TIMESTAMP
-            WHERE gold_person_metrics.person_count IS NOT excluded.person_count
-               OR gold_person_metrics.male_count IS NOT excluded.male_count
-               OR gold_person_metrics.female_count IS NOT excluded.female_count
-               OR gold_person_metrics.unknown_gender_count IS NOT excluded.unknown_gender_count
-            """,
-            (
-                id_alliance,
-                person_count or 0,
-                male_count or 0,
-                female_count or 0,
-                unknown_count or 0,
-            ),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
-
 def get_silver_persons_by_alliance(alliance_name: str):
-    conn = sqlite3.connect(get_db_path())
-    conn.row_factory = sqlite3.Row
+    conn = get_connection(row_factory=sqlite3.Row)
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -294,20 +239,3 @@ def get_silver_persons_by_alliance(alliance_name: str):
     conn.close()
     return [dict(row) for row in rows]
 
-
-def get_gold_person_metrics_by_alliance(alliance_name: str):
-    conn = sqlite3.connect(get_db_path())
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT gpm.*
-        FROM gold_person_metrics gpm
-        JOIN alliances a ON gpm.id_alliance = a.id_alliance
-        WHERE a.alliance_name = ?
-        """,
-        (alliance_name,),
-    )
-    row = cursor.fetchone()
-    conn.close()
-    return dict(row) if row else None

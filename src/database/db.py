@@ -11,21 +11,17 @@ try:
     from src.database.repositories.alliances import get_all_alliances
     from src.database.repositories.countries import (
         get_country_html_cache_logs,
-        get_gold_metrics_by_alliance,
         get_silver_countries_by_alliance,
         insert_bronze_country,
         insert_country_html_cache_log,
         insert_raw_country,
         insert_silver_country,
-        refresh_gold_metrics,
     )
     from src.database.repositories.persons import (
-        get_gold_person_metrics_by_alliance,
         get_silver_persons_by_alliance,
         insert_bronze_person,
         insert_raw_person,
         insert_silver_person,
-        refresh_gold_person_metrics,
     )
     from src.database.repositories.pipeline_execution import (
         finish_pipeline_execution,
@@ -56,7 +52,6 @@ try:
         insert_bronze_weapon,
         insert_raw_weapon,
         insert_silver_weapon,
-        refresh_gold_weapon_metrics,
     )
     from src.database.schema import init_db
 except ImportError:
@@ -72,21 +67,17 @@ except ImportError:
     from database.repositories.alliances import get_all_alliances
     from database.repositories.countries import (
         get_country_html_cache_logs,
-        get_gold_metrics_by_alliance,
         get_silver_countries_by_alliance,
         insert_bronze_country,
         insert_country_html_cache_log,
         insert_raw_country,
         insert_silver_country,
-        refresh_gold_metrics,
     )
     from database.repositories.persons import (
-        get_gold_person_metrics_by_alliance,
         get_silver_persons_by_alliance,
         insert_bronze_person,
         insert_raw_person,
         insert_silver_person,
-        refresh_gold_person_metrics,
     )
     from database.repositories.pipeline_execution import (
         finish_pipeline_execution,
@@ -117,7 +108,6 @@ except ImportError:
         insert_bronze_weapon,
         insert_raw_weapon,
         insert_silver_weapon,
-        refresh_gold_weapon_metrics,
     )
     from database.schema import init_db
 
@@ -129,15 +119,12 @@ __all__ = [
     "insert_bronze_country",
     "insert_silver_country",
     "insert_country_html_cache_log",
-    "refresh_gold_metrics",
     "insert_raw_person",
     "insert_bronze_person",
     "insert_silver_person",
-    "refresh_gold_person_metrics",
     "insert_raw_weapon",
     "insert_bronze_weapon",
     "insert_silver_weapon",
-    "refresh_gold_weapon_metrics",
     "start_pipeline_execution",
     "finish_pipeline_execution",
     "get_pipeline_execution_logs",
@@ -161,9 +148,7 @@ __all__ = [
     "remove_retry_weapon_by_raw_id",
     "get_all_alliances",
     "get_silver_countries_by_alliance",
-    "get_gold_metrics_by_alliance",
     "get_country_html_cache_logs",
     "get_silver_persons_by_alliance",
-    "get_gold_person_metrics_by_alliance",
     "clear_db",
 ]
